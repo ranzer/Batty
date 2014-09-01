@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+  <head>
+	  <title>Batty</title>
+		<script src="modernizr.js"></script>
+		<script>
+		  (function(window) {
+			
+				window.requestAnimationFrame =
+				  window.requestAnimationFrame ||
+					window.mozRequestAnimationFrame ||
+					window.webkitRequestAnimationFrame ||
+					window.oRequestAnimationFrame ||
+					window.msRequestAnimationFrame ||
+					function(callback) {
+					  window.setTimeout(callback, 10);
+					};
+			  
+				function Rectangle(options) {
+				  this.context = options.context;
+					this.x = options.x || 0;
+					this.y = options.y || 0;
+					this.width = options.width || 10;
+					this.height = options.height || 20;
+					this.background = options.background || "#000000";
+				}
+				
+				Rectangle.prototype.draw = function() {
+				  this.context.save();
+					
+					this.context.setTransform(1, 0, 0, 1, 0, 0);
+					this.context.translate(this.x, this.y);
+				
+				  var linearGradient = this.context.createLinearGradient(
+						0, 0, 0, this.height);
+						
+				  linearGradient.addColorStop(0, "rgb(68, 68, 194)");
+					linearGradient.addColorStop(0.1, "rgb(167, 167, 232)");
+					linearGradient.addColorStop(0.6, "rgb(68, 68, 194)");
+				  linearGradient.addColorStop(1, "rgb(68, 68, 194)");
+				
+					this.context.fillStyle = linearGradient;
+					this.context.fillRect(0, 0, this.width, this.height);
+					
+					this.context.restore();
+				}
+				
+				function Circle(options) {
+				  var radians;
+					
+					this.world = options.world;
+					this.context = options.context;
+					this.x = options.x || 0;
+					this.y = options.y || 0;
+					this.vel = options.vel || 10;
+					this.angle = options.angle || 30;
+					this.radius = options.radius || 10;
+					
+					radians = this.angle * Math.PI / 180;
+					
+					this.vx = Math.cos(radians) * this.vel;
+					this.vy = Math.sin(radians) * this.vel;
+					this.background = options.background || "#515196";
+				}
+				
+				Circle.prototype.draw = function() {
+				  var canvas = this.context.canvas;
+					
+					this.x += this.vx;
+					this.y += this.vy;
+					
+					this.wallCollide();
+					this.blocksCollide();
+					
+					this.context.fillStyle = this.background;
+					this.context.beginPath();
+					this.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+					this.context.closePath();
+					this.context.fill();
+				}
+				
+				Circle.prototype.wallCollide = function() {
+				  if (this.x + this.radius > canvas.width) {
+						this.angle = 180 - this.angle;
+					  this.x = canvas.width - this.radius;
+					} else if (this.x - this.radius < 0) {
+						this.angle = 180 - this.angle;
+					  this.x = this.radius;
+					} else if (this.y + this.radius > canvas.height) {
+						this.world.removeCircle(this);
+					  //this.angle = 360 - this.angle;
+					  //this.y = canvas.height - this.radius;
+					} else if (this.y - this.radius < 0) {
+					  this.angle = 360 - this.angle;
+					  this.y = this.radius;
+					}
+					
+					var radians = this.angle * Math.PI / 180;
+					
+					this.vx = this.vel * Math.cos(radians);
+					this.vy = this.vel * Math.sin(radians);
+				}
+				
+				Circle.prototype.blocksCollide = function() {
+				  var blocks = this.world.blocks,
+					    blocksLength = blocks.length,
+							i;
+					
+					for (i = 0; i < blocksLength; i++) {
+					  if (blocks[i] != null && this.hitTestBlock(blocks[i])) {
+							this.blockCollide(blocks[i]);
+							if (blocks[i].type !== "slider") {
+								this.world.removeBlock(blocks[i]);
+							}
+							break;
+						}
+					}
+				}
+				
+				Circle.prototype.hitTestBlock = function(block) {
+				  var isMissed;
+					
+					isMissed = this.x + this.radius < block.x ||
+						block.x + block.width < this.x - this.radius ||
+						this.y + this.radius < block.y ||
+						block.y + block.height < this.y - this.radius;
+					
+					return !isMissed;
+				}
+				
+				Circle.prototype.blockCollide = function(block) {
+				  var radians;
+					
+					var intersectionRect = this.getIntersectionRect(block);
+					
+					if (intersectionRect.width >= intersectionRect.height) {
+					  if (this.y > block.y + block.height) {
+						  this.y = block.y + block.height + this.radius;
+						} else {
+							this.y = block.y - this.radius;
+						}
+						
+						this.angle = 360 - this.angle;
+					} else {
+					  if (this.x < block.x) {
+						  this.x = block.x - this.radius;
+						} else {
+						  this.x = block.x + block.width + this.radius;
+						}
+						
+						this.angle = 180 - this.angle;
+					}
+					
+					radians = this.angle * Math.PI / 180;
+					
+					this.vx = this.vel * Math.cos(radians);
+					this.vy = this.vel * Math.sin(radians);
+				}
+				
+				Circle.prototype.getIntersectionRect = function(block) {
+				  var height, width;
+					
+					var x11 = this.x - this.radius,
+							y11 = this.y - this.radius,
+							x12 = this.x + this.radius,
+							y12 = this.y + this.radius,
+							x21 = block.x,
+							y21 = block.y,
+							x22 = block.x + block.width,
+							y22 = block.y + block.height;
+					
+					width = Math.max(0, Math.min(x12, x22) - Math.max(x11, x21));
+					height = Math.max(0, Math.min(y12, y22) - Math.max(y11, y21));
+					
+					return { width: width, height: height };
+				};
+				
+				function World(options) {
+					var i = 0, 
+					    x = 150,
+							y = 200,
+							world = this,
+							circle;
+					this.lostGame = false;
+					this.wonGame = false;
+					this.context = options.context;
+					this.slider = new Rectangle({
+					  context: options.context,
+						height: 15,
+						x: options.context.canvas.width / 2 - 100,
+						y: options.context.canvas.height - 16,
+						width: 200
+					});
+					this.slider.type = "slider";
+					this.circles = new Array();
+					this.blocks = new Array();
+					
+					for (i = 0; i < 10; i++) {
+					  circle = new Circle({
+							context: options.context,
+							world: world,
+							x: 10 + Math.random() * this.context.canvas.width - 20,
+							y: 10 + Math.random() * 100,
+							vel: 15,
+							radius: 10
+						});
+						
+						this.circles.push(circle);
+					}
+					
+					for (i = 0; i < 100; i++) {
+					  this.blocks.push(new Rectangle({
+							context: options.context,
+						  height: 20,
+							x: x + i % 20 * 60 + 1,
+							y: y + Math.floor(i / 20) * 25,
+							width: 50
+						}));
+					}
+					
+					this.blocks.push(this.slider);
+					
+					window.addEventListener("keydown", function(e) {
+						if (e.keyCode == 37) {
+							world.moveSlider(-20);
+						} else if (e.keyCode == 39) {
+						  world.moveSlider(20);
+						}
+					});
+					
+					window.addEventListener("keyup", function(e) {
+						if (e.keyCode == 37 || e.keyCode == 39) {
+						  world.moveSlider(0);
+						}
+					});
+				}
+				
+				World.prototype.removeCircle = function(circle) {
+				  var circlesLength = this.circles.length,
+					    noCirclesLeft = true,
+							circleIndex,
+							i;
+							
+					circleIndex = this.circles.indexOf(circle);
+					
+					this.circles.splice(circleIndex, 1);
+					
+				  this.lostGame = this.circles.length == 0;
+				};
+				
+				World.prototype.removeBlock = function(block) {
+				  var index = this.blocks.indexOf(block);
+					
+					this.blocks.splice(index, 1);
+				};
+				
+				World.prototype.moveSlider = function(sliderIncrease) {
+				  this.isSliderMoving = !sliderIncrease;
+					this.sliderIncrease = sliderIncrease;
+				};
+				
+				World.prototype.drawBackground = function() {
+					var context = this.context,
+						  canvasWidth = context.canvas.width,
+							canvasHeight = context.canvas.height;
+					
+					context.fillStyle = "#ffffff";
+					context.fillRect(0, 0, canvasWidth, canvasHeight);
+					
+					radialGradient = context.createRadialGradient(
+						canvasWidth, canvasWidth, canvasWidth, 
+						canvasWidth, canvasWidth, canvasWidth + 1);
+						
+					radialGradient.addColorStop(0, "rgb(230, 230, 252)");
+					radialGradient.addColorStop(1, "rgb(177, 177, 222)");
+					
+					context.fillStyle = radialGradient;
+					context.fillRect(0, 0, canvasWidth, canvasHeight);	
+				};
+				
+				World.prototype.draw = function() {
+				  var blocksLength = this.blocks.length,
+							circlesLength = this.circles.length,
+							canvasHeight = this.context.canvas.height,
+							canvasWidth = this.context.canvas.width,
+							i = 0,
+							radialGradient;
+							
+					this.drawBackground();
+					
+					if (this.lostGame) {
+						this.context.fillStyle = "#0000ff";
+						this.context.font = "24px Sans-Serif";
+						this.context.fillText("You loose !", canvasWidth / 2 - 30, canvasHeight / 2 - 10);
+					} else if (this.blocks.length == 1) {
+						this.context.fillStyle = "#0000ff";
+						this.context.font = "24px Sans-Serif";
+						this.context.fillText("You won !", canvasWidth / 2 - 30, canvasHeight / 2 - 10);
+					} else {					
+						if (this.moveSlider) {
+							if (this.sliderIncrease < 0 && this.slider.x + this.sliderIncrease >= 0) {
+								this.slider.x += this.sliderIncrease;
+							} else if (this.sliderIncrease > 0 && this.slider.x + this.slider.width + this.sliderIncrease <= 
+								this.context.canvas.width) {
+								this.slider.x += this.sliderIncrease;
+							}
+						}		
+						
+						for (i = 0; i < circlesLength; i++) {
+							if (this.circles[i] != null) {
+						    this.circles[i].draw();
+							}
+						}
+						
+						for (i = 0; i < blocksLength; i++) {
+							if (this.blocks[i] != null) {
+								this.blocks[i].draw();
+							}
+						}
+					}
+				}
+				
+				window.addEventListener("load", onWindowLoaded, false);
+				
+				function onWindowLoaded() {
+				  var canvas, context, world;
+					
+					if (!Modernizr.canvas) {
+					  return;
+					}
+					
+					canvas = window.document.getElementById("canvas");
+					
+					if (!canvas) {
+					  return;
+					}
+					
+					context = canvas.getContext("2d");
+					
+					world = new World({ context: context });
+					
+					gameLoop(world);
+				}
+				
+				function gameLoop(world) {
+				  window.requestAnimationFrame(function() {
+						gameLoop(world);
+					});
+					
+					world.draw();
+				}
+				
+			})(window);
+		</script>
+	</head>
+	<body>
+	  <canvas height="750" id="canvas" style="border: 1px solid #000000" width="1500">
+		
+		</canvas>
+	</body>
+</html>
