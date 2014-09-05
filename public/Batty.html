@@ -7,121 +7,55 @@
 		<script>
 		  (function(window) {
 			
-			  function Graphics() {
-				  this.graphics = new PIXI.Graphics();
-				}
-				
-				function Graphics.prototype = {
-				  beginFill: function(color, alpha) {
-					  this.graphics.beginFill(color, alpha);
-					},
-					endFill: function() {
-					  this.graphics.endFill();
-					},
-					lineStyle: function() {
-					  this.graphics.lineStyle(lineWidth, color, alpha);
-					},
-					moveTo: function(x, y) {
-					  this.graphics.moveTo(x, y);
-					},
-					lineTo: function(x, y) {
-					  this.graphics.lineTo(x, y);
-					},
-					drawCircle: function(x, y, radius) {
-					  this.graphics.drawCircle(x, y, radius);
-					},
-					drawRect: function(x, y, width, height) {
-					  this.graphics.drawRect(x, y, width, height);
-					}
-				};
-			
-				/*window.requestAnimationFrame =
-				  window.requestAnimationFrame ||
-					window.mozRequestAnimationFrame ||
-					window.webkitRequestAnimationFrame ||
-					window.oRequestAnimationFrame ||
-					window.msRequestAnimationFrame ||
-					function(callback) {
-					  window.setTimeout(callback, 10);
-					};*/
-				
-				function Rectangle(options) {
-				  this.graphics = new Graphics();
-					this.x = options.x || 0;
-					this.y = options.y || 0;
-					this.width = options.width || 10;
-					this.height = options.height || 20;
-					this.background = options.background || "#000000";
-				}
-				
-				Rectangle.prototype.draw = function() {
-				  /*this.context.save();
-					
-					this.context.setTransform(1, 0, 0, 1, 0, 0);
-					this.context.translate(this.x, this.y);*/
-				
-				  var linearGradient = this.context.createLinearGradient(
-						this.x, this.y, 0, this.height);
-						
-				  linearGradient.addColorStop(0, "rgb(68, 68, 194)");
-					linearGradient.addColorStop(0.1, "rgb(167, 167, 232)");
-					linearGradient.addColorStop(0.6, "rgb(68, 68, 194)");
-				  linearGradient.addColorStop(1, "rgb(68, 68, 194)");
-				
-					this.context.fillStyle = linearGradient;
-					this.context.fillRect(0, 0, this.width, this.height);
-					
-				//	this.context.restore();
-				}
-				
-				function Circle(options) {
+				function Circle(texture, world, options) {
 				  var radians;
 					
-					this.world = options.world;
-					this.context = options.context;
-					this.x = options.x || 0;
-					this.y = options.y || 0;
+					PIXI.Sprite.apply(this, [texture]);
+					
+					this.world = world;
+					this.type = "dynamic";
+					
+					this.position.x = options.x || 0;
+					this.position.y = options.y || 0;
 					this.vel = options.vel || 10;
 					this.angle = options.angle || 30;
-					this.radius = options.radius || 10;
 					
 					radians = this.angle * Math.PI / 180;
 					
 					this.vx = Math.cos(radians) * this.vel;
 					this.vy = Math.sin(radians) * this.vel;
-					this.background = options.background || "#515196";
 				}
 				
-				Circle.prototype.draw = function() {
-				  var canvas = this.context.canvas;
-					
-					this.x += this.vx;
-					this.y += this.vy;
+				Circle.prototype = Object.create(PIXI.Sprite.prototype);
+				Circle.prototype.constructor = Circle;
+				
+				Circle.prototype.updatePosition = function() {
+				  var spritePosition = this.position;
+				
+				  spritePosition.x += this.vx;
+					spritePosition.y += this.vy;
 					
 					this.wallCollide();
-					this.blocksCollide();
 					
-					this.context.fillStyle = this.background;
-					this.context.beginPath();
-					this.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-					this.context.closePath();
-					this.context.fill();
+					if (this.isOutOfScreen) {
+					  this.world.removeCircle(this);
+					} else {
+					  this.blocksCollide();
+					}
 				}
 				
 				Circle.prototype.wallCollide = function() {
-				  if (this.x + this.radius > canvas.width) {
+				  var spritePosition = this.position,
+					    world = this.world;
+					if (spritePosition.x + this.width > world.width) {
 						this.angle = 180 - this.angle;
-					  this.x = canvas.width - this.radius;
-					} else if (this.x - this.radius < 0) {
+					  spritePosition.x = world.width - this.width;
+					} else if (spritePosition.x < 0) {
 						this.angle = 180 - this.angle;
-					  this.x = this.radius;
-					} else if (this.y + this.radius > canvas.height) {
-						this.world.removeCircle(this);
-					  //this.angle = 360 - this.angle;
-					  //this.y = canvas.height - this.radius;
-					} else if (this.y - this.radius < 0) {
+					  spritePosition.x = 0;
+					} else if (spritePosition.y < 0) {
 					  this.angle = 360 - this.angle;
-					  this.y = this.radius;
+					  spritePosition.y = 0;
 					}
 					
 					var radians = this.angle * Math.PI / 180;
@@ -136,23 +70,24 @@
 							i;
 					
 					for (i = 0; i < blocksLength; i++) {
-					  if (blocks[i] != null && this.hitTestBlock(blocks[i])) {
+					  if (this.hitTestBlock(blocks[i])) {
 							this.blockCollide(blocks[i]);
 							if (blocks[i].type !== "slider") {
 								this.world.removeBlock(blocks[i]);
+								break;
 							}
-							break;
 						}
 					}
 				}
 				
 				Circle.prototype.hitTestBlock = function(block) {
-				  var isMissed;
+				  var position = this.position,
+					    isMissed;
 					
-					isMissed = this.x + this.radius < block.x ||
-						block.x + block.width < this.x - this.radius ||
-						this.y + this.radius < block.y ||
-						block.y + block.height < this.y - this.radius;
+					isMissed = position.x + this.width < block.position.x ||
+						block.position.x + block.width < position.x ||
+						position.y + this.height < block.position.y ||
+						block.position.y + block.height < position.y;
 					
 					return !isMissed;
 				}
@@ -163,18 +98,20 @@
 					var intersectionRect = this.getIntersectionRect(block);
 					
 					if (intersectionRect.width >= intersectionRect.height) {
-					  if (this.y > block.y + block.height) {
-						  this.y = block.y + block.height + this.radius;
+						// We add 2 to because ball image frame y coordinate doesn't start at 
+						// position 0.
+					  if (this.position.y + 2 >= block.position.y + block.height) {
+						  this.position.y = block.position.y + block.height;
 						} else {
-							this.y = block.y - this.radius;
+							this.position.y = block.position.y - this.height;
 						}
 						
 						this.angle = 360 - this.angle;
 					} else {
-					  if (this.x < block.x) {
-						  this.x = block.x - this.radius;
+					  if (this.position.x < block.position.x) {
+						  this.position.x = block.position.x - this.width;
 						} else {
-						  this.x = block.x + block.width + this.radius;
+						  this.position.x = block.position.x + block.width;
 						}
 						
 						this.angle = 180 - this.angle;
@@ -189,14 +126,14 @@
 				Circle.prototype.getIntersectionRect = function(block) {
 				  var height, width;
 					
-					var x11 = this.x - this.radius,
-							y11 = this.y - this.radius,
-							x12 = this.x + this.radius,
-							y12 = this.y + this.radius,
-							x21 = block.x,
-							y21 = block.y,
-							x22 = block.x + block.width,
-							y22 = block.y + block.height;
+					var x11 = this.position.x,
+							y11 = this.position.y,
+							x12 = this.position.x + this.width,
+							y12 = this.position.y + this.height,
+							x21 = block.position.x,
+							y21 = block.position.y,
+							x22 = block.position.x + block.width,
+							y22 = block.position.y + block.height;
 					
 					width = Math.max(0, Math.min(x12, x22) - Math.max(x11, x21));
 					height = Math.max(0, Math.min(y12, y22) - Math.max(y11, y21));
@@ -209,26 +146,42 @@
 					    x = 150,
 							y = 200,
 							world = this,
-							circle;
+							circleTexture,
+							blockTexture,
+							circle,
+							block;
 					
 					this.width = options.width || 800;
-					this.height = options.heigth || 600;
-				  this.renderer = PIXI.autoDetectRenderer(width, height);
-					this.stage = new PIXI.Stage();
-					this.slider = new Rectangle({
-					  height: 15,
-						x: this.width / 2 - 100,
-						y: this.height - 16,
-						width: 200
-					});
+					this.height = options.height || 600;
+				  this.renderer = PIXI.autoDetectRenderer(this.width, this.height);
+					this.stage = new PIXI.Stage(0xffffff);
+					this.lostGame = false;
+					this.wonGame = false;
+					this.lostGameMessageShown = false;
+					this.wonGameMessageShow = false;
+					
+					this.slider = PIXI.Sprite.fromFrame("slider.png");
+					this.slider.position.x = this.width / 2 - this.slider.width / 2;
+					this.slider.position.y = this.height - this.slider.height - 1;
 					this.slider.type = "slider";
-					this.circles = new Array();
+					
 					this.blocks = new Array();
+					this.circles = new Array();
+					
+					circleTexture = PIXI.TextureCache["ball.png"];
+					
+					if (!circleTexture) {
+					  throw new Error('The frameId "ball.png" does not exist in the texture cache' + this);
+					}
+					
+					blockTexture = PIXI.TextureCache["red.png"];
+					
+					if (!blockTexture) {
+					  throw new Error('The frameId "ball.png" does not exist in the texture cache' + this);  
+					}
 					
 					for (i = 0; i < 10; i++) {
-					  circle = new Circle({
-							graphics: graphics,
-							world: world,
+					  circle = new Circle(circleTexture, this, {
 							x: 10 + Math.random() * this.width - 20,
 							y: 10 + Math.random() * 100,
 							vel: 15,
@@ -236,25 +189,27 @@
 						});
 						
 						this.circles.push(circle);
+						this.stage.addChild(circle);
 					}
 					
 					for (i = 0; i < 100; i++) {
-					  this.blocks.push(new Rectangle({
-							graphics: graphics,
-						  height: 20,
-							x: x + i % 20 * 60 + 1,
-							y: y + Math.floor(i / 20) * 25,
-							width: 50
-						}));
+						block = new PIXI.Sprite(blockTexture);
+						
+						block.position.x = x + i % 20 * 60 + 1;
+						block.position.y = y + Math.floor(i / 20) * 25;
+						
+						this.stage.addChild(block);
+						this.blocks.push(block);
 					}
 					
+					this.stage.addChild(this.slider);
 					this.blocks.push(this.slider);
 					
 					window.addEventListener("keydown", function(e) {
 						if (e.keyCode == 37) {
-							world.moveSlider(-20);
+							world.moveSlider(-30);
 						} else if (e.keyCode == 39) {
-						  world.moveSlider(20);
+						  world.moveSlider(30);
 						}
 					});
 					
@@ -263,30 +218,32 @@
 						  world.moveSlider(0);
 						}
 					});
+					
+					window.document.body.appendChild(this.renderer.view);
 				}
 				
-				World.prototype.removeCircle = function(circle) {
+				World.prototype.removeOutOfScreenCircles = function() {
 				  var circlesLength = this.circles.length,
-					    noCirclesLeft = true,
-							circleIndex,
-							i;
-							
-					circleIndex = this.circles.indexOf(circle);
+					    i;
 					
-					this.circles.splice(circleIndex, 1);
-					
-				  this.lostGame = this.circles.length == 0;
+					for (i = 0; i < circlesLength; i++) {
+						if (this.circles[i].position.y > this.height) {
+							this.circles.splice(i, 1);
+							i--; 
+							circlesLength--;
+						}
+					}
 				};
 				
 				World.prototype.removeBlock = function(block) {
 				  var index = this.blocks.indexOf(block);
 					
 					this.blocks.splice(index, 1);
+					this.stage.removeChild(block);
 				};
 				
 				World.prototype.moveSlider = function(sliderIncrease) {
-				  this.isSliderMoving = !sliderIncrease;
-					this.sliderIncrease = sliderIncrease;
+				  this.sliderIncrease = sliderIncrease;
 				};
 				
 				World.prototype.drawBackground = function() {
@@ -308,72 +265,87 @@
 					context.fillRect(0, 0, canvasWidth, canvasHeight);	
 				};
 				
-				World.prototype.draw = function() {
-				  var blocksLength = this.blocks.length,
-							circlesLength = this.circles.length,
-							canvasHeight = this.context.canvas.height,
-							canvasWidth = this.context.canvas.width,
-							i = 0,
-							radialGradient;
-							
-					this.drawBackground();
+				World.prototype.addMessage = function(message) {
+				  var message = new PIXI.Text(message, {
+					  font: "bold 40px Arial",
+						fill: "#0000ff"
+					});
 					
-					if (this.lostGame) {
-						this.context.fillStyle = "#0000ff";
-						this.context.font = "24px Sans-Serif";
-						this.context.fillText("You loose !", canvasWidth / 2 - 30, canvasHeight / 2 - 10);
-					} else if (this.blocks.length == 1) {
-						this.context.fillStyle = "#0000ff";
-						this.context.font = "24px Sans-Serif";
-						this.context.fillText("You won !", canvasWidth / 2 - 30, canvasHeight / 2 - 10);
-					} else {					
-						if (this.moveSlider) {
-							if (this.sliderIncrease < 0 && this.slider.x + this.sliderIncrease >= 0) {
-								this.slider.x += this.sliderIncrease;
-							} else if (this.sliderIncrease > 0 && this.slider.x + this.slider.width + this.sliderIncrease <= 
-								this.context.canvas.width) {
-								this.slider.x += this.sliderIncrease;
-							}
-						}		
-						
-						for (i = 0; i < circlesLength; i++) {
-							if (this.circles[i] != null) {
-						    this.circles[i].draw();
-							}
-						}
-						
-						for (i = 0; i < blocksLength; i++) {
-							if (this.blocks[i] != null) {
-								this.blocks[i].draw();
-							}
-						}
+					message.anchor.x = 0.5;
+					message.anchor.y = 0.5;
+					
+					message.position.x = this.width / 2;
+					message.position.y = this.height / 2;
+					
+					this.stage.addChild(message);
+				};
+				
+				World.prototype.updateCirclesPositions = function() {
+					var circlesLength = this.circles.length,
+					    i;
+								
+					for (i = 0; i < circlesLength; i++) {
+						this.circles[i].updatePosition();
 					}
+				};
+				
+				World.prototype.updateSliderPosition = function() {
+				  if (this.sliderIncrease < 0 && this.slider.position.x + this.sliderIncrease >= 0) {
+						this.slider.position.x += this.sliderIncrease;
+					} else if (this.sliderIncrease > 0 && 
+						this.slider.position.x + this.slider.width + this.sliderIncrease <= this.width) {
+						this.slider.position.x += this.sliderIncrease;
+					}
+				};
+				
+				World.prototype.draw = function() {
+					if (!this.circles.length) {
+						if (!this.lostGameMessageShown) {
+							this.lostGameMessageShown = true;
+							this.addMessage("You lost!");
+						}
+					} else if (this.blocks.length == 1) {
+						if (!this.wonGameMessageShown) {
+							this.wonGameMessageShown = true;
+							this.addMessage("You won!");
+						}
+					} else {
+						this.updateCirclesPositions();
+						this.removeOutOfScreenCircles();
+						
+						if (this.sliderIncrease) {
+							this.updateSliderPosition();
+						}
+					}						
+							
+					this.renderer.render(this.stage);
 				}
 				
 				window.addEventListener("load", onWindowLoaded, false);
 				
 				function onWindowLoaded() {
-				  var canvas, context, world;
+				  var assets = ["SpriteSheet.json"],
+							assetLoader;
 					
 					if (!Modernizr.canvas) {
 					  return;
 					}
 					
-					canvas = window.document.getElementById("canvas");
+					PIXI.dontSayHello = true;
 					
-					if (!canvas) {
-					  return;
-					}
+					assetLoader = new PIXI.AssetLoader(assets);
 					
-					context = canvas.getContext("2d");
+					assetLoader.onComplete = function() {
+					  var world = new World({ width: 1500, height: 900 });
 					
-					world = new World({ context: context });
+						gameLoop(world);
+					};
 					
-					gameLoop(world);
+					assetLoader.load();
 				}
 				
 				function gameLoop(world) {
-				  window.requestAnimationFrame(function() {
+				  requestAnimFrame(function() {
 						gameLoop(world);
 					});
 					
@@ -384,8 +356,5 @@
 		</script>
 	</head>
 	<body>
-	  <canvas height="750" id="canvas" style="border: 1px solid #000000" width="1500">
-		
-		</canvas>
 	</body>
 </html>
