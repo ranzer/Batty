@@ -2,11 +2,40 @@
 <html lang="en">
   <head>
 	  <title>Batty</title>
-		<script src="modernizr.js"></script>
+		<script src="js/modernizr.js"></script>
+		<script src="js/pixi.dev.js"></script>
 		<script>
 		  (function(window) {
 			
-				window.requestAnimationFrame =
+			  function Graphics() {
+				  this.graphics = new PIXI.Graphics();
+				}
+				
+				function Graphics.prototype = {
+				  beginFill: function(color, alpha) {
+					  this.graphics.beginFill(color, alpha);
+					},
+					endFill: function() {
+					  this.graphics.endFill();
+					},
+					lineStyle: function() {
+					  this.graphics.lineStyle(lineWidth, color, alpha);
+					},
+					moveTo: function(x, y) {
+					  this.graphics.moveTo(x, y);
+					},
+					lineTo: function(x, y) {
+					  this.graphics.lineTo(x, y);
+					},
+					drawCircle: function(x, y, radius) {
+					  this.graphics.drawCircle(x, y, radius);
+					},
+					drawRect: function(x, y, width, height) {
+					  this.graphics.drawRect(x, y, width, height);
+					}
+				};
+			
+				/*window.requestAnimationFrame =
 				  window.requestAnimationFrame ||
 					window.mozRequestAnimationFrame ||
 					window.webkitRequestAnimationFrame ||
@@ -14,10 +43,10 @@
 					window.msRequestAnimationFrame ||
 					function(callback) {
 					  window.setTimeout(callback, 10);
-					};
-			  
+					};*/
+				
 				function Rectangle(options) {
-				  this.context = options.context;
+				  this.graphics = new Graphics();
 					this.x = options.x || 0;
 					this.y = options.y || 0;
 					this.width = options.width || 10;
@@ -26,13 +55,13 @@
 				}
 				
 				Rectangle.prototype.draw = function() {
-				  this.context.save();
+				  /*this.context.save();
 					
 					this.context.setTransform(1, 0, 0, 1, 0, 0);
-					this.context.translate(this.x, this.y);
+					this.context.translate(this.x, this.y);*/
 				
 				  var linearGradient = this.context.createLinearGradient(
-						0, 0, 0, this.height);
+						this.x, this.y, 0, this.height);
 						
 				  linearGradient.addColorStop(0, "rgb(68, 68, 194)");
 					linearGradient.addColorStop(0.1, "rgb(167, 167, 232)");
@@ -42,7 +71,7 @@
 					this.context.fillStyle = linearGradient;
 					this.context.fillRect(0, 0, this.width, this.height);
 					
-					this.context.restore();
+				//	this.context.restore();
 				}
 				
 				function Circle(options) {
@@ -176,19 +205,20 @@
 				};
 				
 				function World(options) {
-					var i = 0, 
+				  var i = 0, 
 					    x = 150,
 							y = 200,
 							world = this,
 							circle;
-					this.lostGame = false;
-					this.wonGame = false;
-					this.context = options.context;
+					
+					this.width = options.width || 800;
+					this.height = options.heigth || 600;
+				  this.renderer = PIXI.autoDetectRenderer(width, height);
+					this.stage = new PIXI.Stage();
 					this.slider = new Rectangle({
-					  context: options.context,
-						height: 15,
-						x: options.context.canvas.width / 2 - 100,
-						y: options.context.canvas.height - 16,
+					  height: 15,
+						x: this.width / 2 - 100,
+						y: this.height - 16,
 						width: 200
 					});
 					this.slider.type = "slider";
@@ -197,9 +227,9 @@
 					
 					for (i = 0; i < 10; i++) {
 					  circle = new Circle({
-							context: options.context,
+							graphics: graphics,
 							world: world,
-							x: 10 + Math.random() * this.context.canvas.width - 20,
+							x: 10 + Math.random() * this.width - 20,
 							y: 10 + Math.random() * 100,
 							vel: 15,
 							radius: 10
@@ -210,7 +240,7 @@
 					
 					for (i = 0; i < 100; i++) {
 					  this.blocks.push(new Rectangle({
-							context: options.context,
+							graphics: graphics,
 						  height: 20,
 							x: x + i % 20 * 60 + 1,
 							y: y + Math.floor(i / 20) * 25,
