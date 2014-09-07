@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang='en'>
   <head>
 	  <title>Batty</title>
-		<script src="js/modernizr.js"></script>
-		<script src="js/pixi.dev.js"></script>
+		<script src='js/modernizr.js'></script>
+		<script src='js/pixi.dev.js'></script>
 		<script>
 		  (function(window) {
+			
 			
 				function Circle(texture, world, options) {
 				  var radians;
@@ -13,11 +14,11 @@
 					PIXI.Sprite.apply(this, [texture]);
 					
 					this.world = world;
-					this.type = "dynamic";
+					this.type = 'dynamic';
 					
-					this.position.x = options.x || 0;
-					this.position.y = options.y || 0;
-					this.vel = options.vel || 10;
+					this.position.x = options.x || this.width + 1;
+					this.position.y = options.y || this.height + 1;
+					this.vel = options.vel || 15;
 					this.angle = options.angle || 30;
 					
 					radians = this.angle * Math.PI / 180;
@@ -72,7 +73,7 @@
 					for (i = 0; i < blocksLength; i++) {
 					  if (this.hitTestBlock(blocks[i])) {
 							this.blockCollide(blocks[i]);
-							if (blocks[i].type !== "slider") {
+							if (blocks[i].type !== 'slider') {
 								this.world.removeBlock(blocks[i]);
 								break;
 							}
@@ -100,7 +101,7 @@
 					if (intersectionRect.width >= intersectionRect.height) {
 						// We add 2 to because ball image frame y coordinate doesn't start at 
 						// position 0.
-					  if (this.position.y + 2 >= block.position.y + block.height) {
+					  if (this.position.y >= block.position.y + block.height / 2) {
 						  this.position.y = block.position.y + block.height;
 						} else {
 							this.position.y = block.position.y - this.height;
@@ -144,8 +145,9 @@
 				function World(options) {
 				  var i = 0, 
 					    x = 150,
-							y = 200,
+							y = 150,
 							world = this,
+							blockImages = [ 'blue.png', 'purple.png', 'red.png', 'yellow.png' ],
 							circleTexture,
 							blockTexture,
 							circle,
@@ -160,43 +162,42 @@
 					this.lostGameMessageShown = false;
 					this.wonGameMessageShow = false;
 					
-					this.slider = PIXI.Sprite.fromFrame("slider.png");
+					this.slider = PIXI.Sprite.fromFrame('slider.png');
 					this.slider.position.x = this.width / 2 - this.slider.width / 2;
 					this.slider.position.y = this.height - this.slider.height - 1;
-					this.slider.type = "slider";
+					this.slider.type = 'slider';
 					
 					this.blocks = new Array();
 					this.circles = new Array();
 					
-					circleTexture = PIXI.TextureCache["ball.png"];
+					circleTexture = PIXI.TextureCache['ball.png'];
 					
 					if (!circleTexture) {
-					  throw new Error('The frameId "ball.png" does not exist in the texture cache' + this);
+					  throw new Error('The frameId ' + ball.png + ' does not exist in the texture cache' + this);
 					}
 					
-					blockTexture = PIXI.TextureCache["red.png"];
-					
-					if (!blockTexture) {
-					  throw new Error('The frameId "ball.png" does not exist in the texture cache' + this);  
-					}
-					
-					for (i = 0; i < 10; i++) {
+					for (i = 0; i < 5; i++) {
 					  circle = new Circle(circleTexture, this, {
 							x: 10 + Math.random() * this.width - 20,
 							y: 10 + Math.random() * 100,
-							vel: 15,
-							radius: 10
+							vel: 15
 						});
 						
 						this.circles.push(circle);
 						this.stage.addChild(circle);
 					}
 					
-					for (i = 0; i < 100; i++) {
-						block = new PIXI.Sprite(blockTexture);
+					for (i = 0; i < 40; i++) {
+					  blockTexture = PIXI.TextureCache[blockImages[i % blockImages.length]];
+					
+						if (!blockTexture) {
+							throw new Error('The frameId ' + blockImages[i % blockImages.length] + ' does not exist in the texture cache ' + this);  
+						}
+					
+					  block = new PIXI.Sprite(blockTexture);
 						
-						block.position.x = x + i % 20 * 60 + 1;
-						block.position.y = y + Math.floor(i / 20) * 25;
+						block.position.x = x + i % 8 * 55 + 1;
+						block.position.y = y + Math.floor(i / 8) * 30;
 						
 						this.stage.addChild(block);
 						this.blocks.push(block);
@@ -205,7 +206,7 @@
 					this.stage.addChild(this.slider);
 					this.blocks.push(this.slider);
 					
-					window.addEventListener("keydown", function(e) {
+					window.addEventListener('keydown', function(e) {
 						if (e.keyCode == 37) {
 							world.moveSlider(-30);
 						} else if (e.keyCode == 39) {
@@ -213,7 +214,7 @@
 						}
 					});
 					
-					window.addEventListener("keyup", function(e) {
+					window.addEventListener('keyup', function(e) {
 						if (e.keyCode == 37 || e.keyCode == 39) {
 						  world.moveSlider(0);
 						}
@@ -251,15 +252,15 @@
 						  canvasWidth = context.canvas.width,
 							canvasHeight = context.canvas.height;
 					
-					context.fillStyle = "#ffffff";
+					context.fillStyle = '#ffffff';
 					context.fillRect(0, 0, canvasWidth, canvasHeight);
 					
 					radialGradient = context.createRadialGradient(
 						canvasWidth, canvasWidth, canvasWidth, 
 						canvasWidth, canvasWidth, canvasWidth + 1);
 						
-					radialGradient.addColorStop(0, "rgb(230, 230, 252)");
-					radialGradient.addColorStop(1, "rgb(177, 177, 222)");
+					radialGradient.addColorStop(0, 'rgb(230, 230, 252)');
+					radialGradient.addColorStop(1, 'rgb(177, 177, 222)');
 					
 					context.fillStyle = radialGradient;
 					context.fillRect(0, 0, canvasWidth, canvasHeight);	
@@ -267,8 +268,8 @@
 				
 				World.prototype.addMessage = function(message) {
 				  var message = new PIXI.Text(message, {
-					  font: "bold 40px Arial",
-						fill: "#0000ff"
+					  font: 'bold 40px Arial',
+						fill: '#0000ff'
 					});
 					
 					message.anchor.x = 0.5;
@@ -302,12 +303,12 @@
 					if (!this.circles.length) {
 						if (!this.lostGameMessageShown) {
 							this.lostGameMessageShown = true;
-							this.addMessage("You lost!");
+							this.addMessage('You lost!');
 						}
 					} else if (this.blocks.length == 1) {
 						if (!this.wonGameMessageShown) {
 							this.wonGameMessageShown = true;
-							this.addMessage("You won!");
+							this.addMessage('You won!');
 						}
 					} else {
 						this.updateCirclesPositions();
@@ -321,10 +322,10 @@
 					this.renderer.render(this.stage);
 				}
 				
-				window.addEventListener("load", onWindowLoaded, false);
+				window.addEventListener('load', onWindowLoaded, false);
 				
 				function onWindowLoaded() {
-				  var assets = ["SpriteSheet.json"],
+				  var assets = ['SpriteSheet.json'],
 							assetLoader;
 					
 					if (!Modernizr.canvas) {
@@ -336,7 +337,7 @@
 					assetLoader = new PIXI.AssetLoader(assets);
 					
 					assetLoader.onComplete = function() {
-					  var world = new World({ width: 1500, height: 900 });
+					  var world = new World({ width: 800, height: 600 });
 					
 						gameLoop(world);
 					};
