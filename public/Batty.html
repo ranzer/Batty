@@ -7,19 +7,24 @@
 		<script>
 		  (function(window) {
 			
-			
-				function Circle(texture, world, options) {
+			  function DynamicBody(texture, world, options) {
 				  var radians;
 					
 					PIXI.Sprite.apply(this, [texture]);
 					
 					this.world = world;
-					this.type = 'dynamic';
 					
+					// We use texture 'width' and 'height' instance properties rather then 'width' and 'height'
+					// of 'this' variable in order to allow calling DynamicBody function without creating 
+					// new object instance.
+					this.width = this.width || texture.width;
+					this.height = this.height || texture.height;
 					this.position.x = options.x || this.width + 1;
 					this.position.y = options.y || this.height + 1;
-					this.vel = options.vel || 15;
-					this.angle = options.angle || 30;
+					this.vel = typeof (options.vel) !== 'undefined' ? options.vel : 15;
+					this.angle = typeof (options.angle) !== 'undefined' ? options.angle : 30;
+					this.stopAnimation = false;
+					this.type = 'dynamic';
 					
 					radians = this.angle * Math.PI / 180;
 					
@@ -27,25 +32,29 @@
 					this.vy = Math.sin(radians) * this.vel;
 				}
 				
-				Circle.prototype = Object.create(PIXI.Sprite.prototype);
-				Circle.prototype.constructor = Circle;
-				
-				Circle.prototype.updatePosition = function() {
-				  var spritePosition = this.position;
-				
-				  spritePosition.x += this.vx;
-					spritePosition.y += this.vy;
-					
-					this.wallCollide();
-					
-					if (this.isOutOfScreen) {
-					  this.world.removeCircle(this);
-					} else {
-					  this.blocksCollide();
+				DynamicBody.prototype = Object.create(PIXI.Sprite.prototype);
+				DynamicBody.prototype.constructor = DynamicBody;
+			
+			  DynamicBody.prototype.updateTransform = function() {
+					if (!this.stopAnimation) {
+						var spritePosition = this.position,
+								radians = this.angle * Math.PI / 180;
+						
+						PIXI.Sprite.prototype.updateTransform.call(this);
+						
+						this.vx = Math.cos(radians) * this.vel;
+						this.vy = Math.sin(radians) * this.vel;
+						
+						spritePosition.x += this.vx;
+						spritePosition.y += this.vy;
+						
+						if (this.onUpdateTransformed) {
+							this.onUpdateTransformed();
+						}
 					}
 				}
 				
-				Circle.prototype.wallCollide = function() {
+				DynamicBody.prototype.wallCollide = function() {
 				  var spritePosition = this.position,
 					    world = this.world;
 					if (spritePosition.x + this.width > world.width) {
@@ -57,6 +66,11 @@
 					} else if (spritePosition.y < 0) {
 					  this.angle = 360 - this.angle;
 					  spritePosition.y = 0;
+					} else if (this.visible && spritePosition.y > world.height) {
+						if (this.onOutOfScreen) {
+							this.onOutOfScreen(this);
+						}
+						return;
 					}
 					
 					var radians = this.angle * Math.PI / 180;
@@ -65,23 +79,25 @@
 					this.vy = this.vel * Math.sin(radians);
 				}
 				
-				Circle.prototype.blocksCollide = function() {
+				DynamicBody.prototype.blocksCollide = function() {
 				  var blocks = this.world.blocks,
 					    blocksLength = blocks.length,
+							block,
 							i;
 					
 					for (i = 0; i < blocksLength; i++) {
-					  if (this.hitTestBlock(blocks[i])) {
-							this.blockCollide(blocks[i]);
-							if (blocks[i].type !== 'slider') {
-								this.world.removeBlock(blocks[i]);
-								break;
+					  block = blocks[i];
+						if (block.visible && this.hitTestBlock(block)) {
+							if (this.onBlockCollided) {
+								this.onBlockCollided(block); 
 							}
+							
+							break;
 						}
 					}
 				}
 				
-				Circle.prototype.hitTestBlock = function(block) {
+				DynamicBody.prototype.hitTestBlock = function(block) {
 				  var position = this.position,
 					    isMissed;
 					
@@ -93,15 +109,13 @@
 					return !isMissed;
 				}
 				
-				Circle.prototype.blockCollide = function(block) {
+				DynamicBody.prototype.blockCollide = function(block) {
 				  var radians;
 					
 					var intersectionRect = this.getIntersectionRect(block);
 					
 					if (intersectionRect.width >= intersectionRect.height) {
-						// We add 2 to because ball image frame y coordinate doesn't start at 
-						// position 0.
-					  if (this.position.y >= block.position.y + block.height / 2) {
+						if (this.position.y >= block.position.y + block.height / 2) {
 						  this.position.y = block.position.y + block.height;
 						} else {
 							this.position.y = block.position.y - this.height;
@@ -124,7 +138,7 @@
 					this.vy = this.vel * Math.sin(radians);
 				}
 				
-				Circle.prototype.getIntersectionRect = function(block) {
+				DynamicBody.prototype.getIntersectionRect = function(block) {
 				  var height, width;
 					
 					var x11 = this.position.x,
@@ -142,16 +156,147 @@
 					return { width: width, height: height };
 				};
 				
+				DynamicBody.prototype.onUpdateTransformed = null;
+				DynamicBody.prototype.onBlockCollided = null;
+				DynamicBody.prototype.onOutOfScreen = null;
+			
+				function Circle(texture, world, options) {
+					DynamicBody.apply(this, [texture, world, options]);
+				}
+				
+				Circle.prototype = Object.create(DynamicBody.prototype);
+				Circle.prototype.constructor = Circle;
+				
+				Circle.prototype.onUpdateTransformed = function(parent) {
+				  this.wallCollide();
+					this.blocksCollide();
+				}
+				
+				Circle.prototype.onBlockCollided = function(block) {
+					if (block.type === 'block' || block.type === 'slider') {
+						this.blockCollide(block);
+						
+						// Potential memory leak issue cause block object cannot 
+						// be disposed until gift object is disposed.
+						if (block.type === 'block') {
+							if (block.gift) {
+								this.world.addGift(block.gift);
+							}
+							
+							this.world.removeBlock(block);
+						}
+					}
+				};
+				
+				Circle.prototype.onOutOfScreen = function(circle) {
+					this.world.removeCircle(circle);
+				};
+				
+				function Gift(textures, world, options) {
+					var options = options || {};
+					
+					options.angle = options.angle || 90;
+					
+					DynamicBody.apply(this, [textures[0], world, options]);
+					
+					this.textures = textures;
+					this.animationSpeed = options.animationSpeed || 1;
+					this.loop = options.loop || true;
+					this.onComplete = options.onComplete || null;
+					this.currentFrame = options.currentFrame || 0;
+					this.playing = options.playing || false;
+				}
+				
+				Gift.prototype = (function() {
+					var dynamicBodyPrototype = Object.create(DynamicBody.prototype),
+							movieClipPrototype = Object.create(PIXI.MovieClip.prototype),
+							giftPrototype = {},
+							fnCopyProperties;
+						
+					fnCopyProperties = function(sourceObject, destObject) {
+					  var prop;
+						
+						for (prop in sourceObject) {
+						  destObject[prop] = sourceObject[prop];
+						}
+					};
+					
+					fnCopyProperties(dynamicBodyPrototype, giftPrototype);
+					fnCopyProperties(movieClipPrototype, giftPrototype);
+					
+					// We want to override MovieClip's updateTransform method.
+					giftPrototype.updateTransform = dynamicBodyPrototype.updateTransform;
+					
+					return giftPrototype;
+				})();
+				Gift.prototype.constructor = Gift;
+				
+				Gift.prototype.onUpdateTransformed = function() {
+				  this.blocksCollide();
+					PIXI.MovieClip.prototype.updateTransform.call(this);
+				};
+				
+				Gift.prototype.onBlockCollided = function(block) {
+				  if (block.type === 'slider') {
+					  this.world.removeGift(this);
+					}
+				};
+				
+				function Slider(texture, world, options) {
+				  var options = options || {};
+					
+					options.x = typeof (options.x) !== "undefined" ? options.x : world.width / 2 - texture.frame.width / 2;
+					options.y = typeof (options.y) !== "undefined" ? options.y : world.height - texture.frame.height - 1;
+					options.angle = 0;
+					
+					DynamicBody.apply(this, [texture, world, options]);
+					
+					this.vel1 = typeof (options.vel1) !== "undefined" ? options.vel1 : 15;
+					this.type = 'slider';
+					this.maxX = world.width - texture.frame.width;
+					
+					window.addEventListener('keydown', this.onKeyDown.bind(this));
+					window.addEventListener('keyup', this.onKeyUp.bind(this));
+				}
+				
+				Slider.prototype = Object.create(DynamicBody.prototype);
+				Slider.prototype.constructor = Slider;
+				
+				Slider.prototype.onKeyDown = function(e) {
+				  if (e.keyCode == 37) {
+						this.vel = -this.vel1;
+					} else if (e.keyCode == 39) {
+						this.vel = this.vel1;
+					}
+				};
+				
+				Slider.prototype.onKeyUp = function(e) {
+				  if (e.keyCode == 37 || e.keyCode == 39) {
+						this.vel = 0;
+					}
+				};
+				
+				Slider.prototype.onUpdateTransformed = function() {
+				  if (this.position.x < 0) {
+					  this.position.x = 0;
+					}	else if (this.position.x + this.width > this.world.width) {
+					  this.position.x = this.world.width - this.width;
+					}
+				};
+				
 				function World(options) {
-				  var i = 0, 
-					    x = 150,
+				  var x = 150,
 							y = 150,
 							world = this,
 							blockImages = [ 'blue.png', 'purple.png', 'red.png', 'yellow.png' ],
+							balls3GiftTexturesLength = 6,
+							balls3GiftTextures = new Array(),
 							circleTexture,
 							blockTexture,
 							circle,
-							block;
+							block,
+							gift,
+							i;
 					
 					this.width = options.width || 800;
 					this.height = options.height || 600;
@@ -162,13 +307,15 @@
 					this.lostGameMessageShown = false;
 					this.wonGameMessageShow = false;
 					
-					this.slider = PIXI.Sprite.fromFrame('slider.png');
-					this.slider.position.x = this.width / 2 - this.slider.width / 2;
-					this.slider.position.y = this.height - this.slider.height - 1;
-					this.slider.type = 'slider';
+					this.slider = new Slider(PIXI.TextureCache['slider.png'], this, { vel: 0, vel1: 25 });
 					
 					this.blocks = new Array();
 					this.circles = new Array();
+					this.gifts = new Array();
+					
+					for (i = 0; i < balls3GiftTexturesLength; i++) {
+					  balls3GiftTextures.push(PIXI.TextureCache['3balls' + i + '.png']);
+					}
 					
 					circleTexture = PIXI.TextureCache['ball.png'];
 					
@@ -180,7 +327,7 @@
 					  circle = new Circle(circleTexture, this, {
 							x: 10 + Math.random() * this.width - 20,
 							y: 10 + Math.random() * 100,
-							vel: 15
+							vel: 0
 						});
 						
 						this.circles.push(circle);
@@ -198,6 +345,13 @@
 						
 						block.position.x = x + i % 8 * 55 + 1;
 						block.position.y = y + Math.floor(i / 8) * 30;
+						block.type = 'block';
+						
+						if (i % 10 == 0) {
+							gift = new Gift(balls3GiftTextures, this, { x: block.position.x, y: block.position.y, vel: 1, animationSpeed: 0.1 });
+							
+							block.gift = gift;
+						}
 						
 						this.stage.addChild(block);
 						this.blocks.push(block);
@@ -206,64 +360,50 @@
 					this.stage.addChild(this.slider);
 					this.blocks.push(this.slider);
 					
-					window.addEventListener('keydown', function(e) {
-						if (e.keyCode == 37) {
-							world.moveSlider(-30);
-						} else if (e.keyCode == 39) {
-						  world.moveSlider(30);
-						}
-					});
-					
-					window.addEventListener('keyup', function(e) {
-						if (e.keyCode == 37 || e.keyCode == 39) {
-						  world.moveSlider(0);
-						}
-					});
-					
 					window.document.body.appendChild(this.renderer.view);
 				}
 				
-				World.prototype.removeOutOfScreenCircles = function() {
-				  var circlesLength = this.circles.length,
-					    i;
+				World.prototype.removeBlock = function(block) {
+					this.removeBody(block, this.blocks);
+				};
+				
+				World.prototype.addGift = function(gift) {
+					gift.play();
+					this.gifts.push(gift);
+					this.stage.addChild(gift);
+				};
+				
+				World.prototype.removeGift = function(gift) {
+					var index = this.gifts.indexOf(gift);
 					
-					for (i = 0; i < circlesLength; i++) {
-						if (this.circles[i].position.y > this.height) {
-							this.circles.splice(i, 1);
-							i--; 
-							circlesLength--;
+					gift.visible = false;
+					this.gifts.splice(index, 1);
+				  //this.stage.removeChild(gift);
+				};
+				
+				World.prototype.removeCircle = function(circle) {
+				  this.removeBody(circle, this.circles);
+				};
+				
+				World.prototype.removeBody = function(body, bodies) {
+				  var index = bodies.indexOf(body);
+					
+					body.visible = false;
+					bodies.splice(index, 1);
+					
+					//this.stage.removeChild(body);
+				};
+				
+				World.prototype.stopAnimation = function() {
+				  var childBodies = this.stage.children,
+					    childBodiesLength = childBodies.length,
+							i;
+					
+					for (i = 0; i < childBodiesLength; i++) {
+					  if (childBodies[i].type === 'dynamic') {
+						  childBodies[i].stopAnimation = true;
 						}
 					}
-				};
-				
-				World.prototype.removeBlock = function(block) {
-				  var index = this.blocks.indexOf(block);
-					
-					this.blocks.splice(index, 1);
-					this.stage.removeChild(block);
-				};
-				
-				World.prototype.moveSlider = function(sliderIncrease) {
-				  this.sliderIncrease = sliderIncrease;
-				};
-				
-				World.prototype.drawBackground = function() {
-					var context = this.context,
-						  canvasWidth = context.canvas.width,
-							canvasHeight = context.canvas.height;
-					
-					context.fillStyle = '#ffffff';
-					context.fillRect(0, 0, canvasWidth, canvasHeight);
-					
-					radialGradient = context.createRadialGradient(
-						canvasWidth, canvasWidth, canvasWidth, 
-						canvasWidth, canvasWidth, canvasWidth + 1);
-						
-					radialGradient.addColorStop(0, 'rgb(230, 230, 252)');
-					radialGradient.addColorStop(1, 'rgb(177, 177, 222)');
-					
-					context.fillStyle = radialGradient;
-					context.fillRect(0, 0, canvasWidth, canvasHeight);	
 				};
 				
 				World.prototype.addMessage = function(message) {
@@ -281,43 +421,20 @@
 					this.stage.addChild(message);
 				};
 				
-				World.prototype.updateCirclesPositions = function() {
-					var circlesLength = this.circles.length,
-					    i;
-								
-					for (i = 0; i < circlesLength; i++) {
-						this.circles[i].updatePosition();
-					}
-				};
-				
-				World.prototype.updateSliderPosition = function() {
-				  if (this.sliderIncrease < 0 && this.slider.position.x + this.sliderIncrease >= 0) {
-						this.slider.position.x += this.sliderIncrease;
-					} else if (this.sliderIncrease > 0 && 
-						this.slider.position.x + this.slider.width + this.sliderIncrease <= this.width) {
-						this.slider.position.x += this.sliderIncrease;
-					}
-				};
-				
 				World.prototype.draw = function() {
 					if (!this.circles.length) {
 						if (!this.lostGameMessageShown) {
+							this.stopAnimation();
 							this.lostGameMessageShown = true;
 							this.addMessage('You lost!');
 						}
 					} else if (this.blocks.length == 1) {
 						if (!this.wonGameMessageShown) {
+							this.stopAnimation();
 							this.wonGameMessageShown = true;
 							this.addMessage('You won!');
 						}
-					} else {
-						this.updateCirclesPositions();
-						this.removeOutOfScreenCircles();
-						
-						if (this.sliderIncrease) {
-							this.updateSliderPosition();
-						}
-					}						
+					}
 							
 					this.renderer.render(this.stage);
 				}
