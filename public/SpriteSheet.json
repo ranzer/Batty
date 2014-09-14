@@ -47,6 +47,54 @@
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":25,"h":25},
 	"sourceSize": {"w":25,"h":25}    
+},
+"3balls0.png":
+{
+  "frame": {"x":0,"y":40,"w":60,"h":50},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":60,"h":50},
+	"sourceSize": {"w":60,"h":50}
+},
+"3balls1.png":
+{
+  "frame": {"x":60,"y":40,"w":60,"h":50},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":60,"h":50},
+	"sourceSize": {"w":60,"h":50}
+},
+"3balls2.png":
+{
+  "frame": {"x":120,"y":40,"w":60,"h":50},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":60,"h":50},
+	"sourceSize": {"w":60,"h":50}
+},
+"3balls3.png":
+{
+  "frame": {"x":180,"y":40,"w":60,"h":50},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":60,"h":50},
+	"sourceSize": {"w":60,"h":50}
+},
+"3balls4.png":
+{
+  "frame": {"x":240,"y":40,"w":60,"h":50},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":60,"h":50},
+	"sourceSize": {"w":60,"h":50}
+},
+"3balls5.png":
+{
+  "frame": {"x":360,"y":40,"w":60,"h":50},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":60,"h":50},
+	"sourceSize": {"w":60,"h":50}
 }},
 "meta": {
 	"app": "http://www.texturepacker.com",
