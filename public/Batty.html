@@ -24,7 +24,6 @@
 					this.vel = typeof (options.vel) !== 'undefined' ? options.vel : 15;
 					this.angle = typeof (options.angle) !== 'undefined' ? options.angle : 30;
 					this.stopAnimation = false;
-					this.type = 'dynamic';
 					
 					radians = this.angle * Math.PI / 180;
 					
@@ -165,6 +164,8 @@
 			
 				function Circle(texture, world, options) {
 					DynamicBody.apply(this, [texture, world, options]);
+					
+					this.type = 'circle';
 				}
 				
 				Circle.prototype = Object.create(DynamicBody.prototype);
@@ -212,6 +213,7 @@
 					this.onComplete = options.onComplete || null;
 					this.currentFrame = options.currentFrame || 0;
 					this.playing = options.playing || false;
+					this.type = 'gift';
 				}
 				
 				Gift.prototype = (function() {
@@ -291,19 +293,19 @@
 				Balls3Gift.prototype.constructor = Balls3Gift;
 				
 				function HandGift(world, options) {
-					var HandGiftTexturesLength = 6,
+					var HandGiftTexturesLength = 7,
 							HandGiftTextures = new Array();
 					
 					for (i = 0; i < HandGiftTexturesLength; i++) {
-					  HandGiftTextures.push(PIXI.TextureCache['3balls' + i + '.png']);
+					  HandGiftTextures.push(PIXI.TextureCache['hand' + i + '.png']);
 					}
 
 					options.action = function(slider) {
-						slider.onBlockCollided = function(circle) {
+						slider.onBlockCollided = function(block) {
 							if (Slider.prototype.onBlockCollided) {
 								Slider.prototype.onBlockCollided.call(slider);
 							}
-							console.log("slider onBlockCollided");
+							
 						};  
 					};
 					
@@ -418,7 +420,19 @@
 						block.position.y = y + Math.floor(i / 8) * 30;
 						block.type = 'block';
 						
-						if (i % 10 == 0) {
+						if (i % 20 == 0) {
+						  gift = new HandGift(
+								this,
+								{
+									animationSpeed: 0.1,
+									x: block.position.x, 
+									y: block.position.y, 
+									vel: 1
+								}
+							);
+							
+							block.gift = gift;
+						} else if (i % 10 == 0) {
 							gift = new Balls3Gift(
 								this,
 								{
@@ -428,19 +442,9 @@
 									vel: 1
 								}
 							);
-							/*gift = new Gift(
-								balls3GiftTextures, 
-								this, 
-								{ 
-									action: HandGift,
-									animationSpeed: 0.1,
-									x: block.position.x, 
-									y: block.position.y, 
-									vel: 1
-								});*/
 							
 							block.gift = gift;
-						}
+						} 
 						
 						this.stage.addChild(block);
 						this.blocks.push(block);
@@ -505,7 +509,9 @@
 							i;
 					
 					for (i = 0; i < childBodiesLength; i++) {
-					  if (childBodies[i].type === 'dynamic') {
+					  if (childBodies[i].type === 'circle' ||
+						    childBodies[i].type === 'slider' || 
+								childBodies[i].type === 'gift') {
 						  childBodies[i].stopAnimation = true;
 						}
 					}
