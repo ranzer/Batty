@@ -420,12 +420,12 @@
 					this.addAction(Slider.KEY_UP, this.onKeyUp.bind(this));
 					
 					// Treba korisiti publish subscriber pattern
-					window.addEventListener('keydown', this.triggerActions.bind(this, Slider.KEY_DOWN));
-					window.addEventListener('keyup', this.triggerActions.bind(this, Slider.KEY_UP));
+					window.addEventListener(Slider.KEY_DOWN, this.triggerActions.bind(this, Slider.KEY_DOWN));
+					window.addEventListener(Slider.KEY_UP, this.triggerActions.bind(this, Slider.KEY_UP));
 				}
 				
-				Slider.KEY_DOWN = 0;
-				Slider.KEY_UP = 1;
+				Slider.KEY_DOWN = 'keydown';
+				Slider.KEY_UP = 'keyup';
 				
 				Slider.prototype = Object.create(DynamicBody.prototype);
 				
