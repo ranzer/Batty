@@ -18,10 +18,10 @@ define(['pixi'], function(PIXI) {
       this.angle = typeof (options.angle) !== 'undefined' ? options.angle : 30;
       this.stopAnimation = false;
       
-      radians = this.angle * Math.PI / 180;
+      radians = this.getRadians();
       
-      this.vx = Math.cos(radians) * this.vel;
-      this.vy = Math.sin(radians) * this.vel;
+      this.vx = this.getVelX(radians);
+      this.vy = this.getVelY(radians);
     }
     
     DynamicBody.prototype = Object.create(PIXI.Sprite.prototype);
@@ -30,24 +30,50 @@ define(['pixi'], function(PIXI) {
       return [];
     };
   
+    DynamicBody.prototype.getRadians = function() {
+      var radians = this.angle * Math.PI / 180;
+      
+      return radians;
+    };
+  
+    DynamicBody.prototype.getVelX = function(radians) {
+      var vx = Math.cos(radians) * this.vel;
+      
+      return vx;
+    };
+    
+    DynamicBody.prototype.getVelY = function(radians) {
+      var vy = Math.sin(radians) * this.vel;
+      
+      return vy;
+    };
+  
     DynamicBody.prototype.updateTransform = function() {
       if (!this.stopAnimation) {
-        var spritePosition = this.position,
-            radians = this.angle * Math.PI / 180;
-        
         PIXI.Sprite.prototype.updateTransform.call(this);
         
-        this.vx = Math.cos(radians) * this.vel;
-        this.vy = Math.sin(radians) * this.vel;
-        
-        spritePosition.x += this.vx;
-        spritePosition.y += this.vy;
-        
+        this.calculateVelComponents();
+        this.calculateSpritePosition();
+       
         if (this.onUpdateTransformed) {
           this.onUpdateTransformed();
         }
       }
     }
+    
+    DynamicBody.prototype.calculateVelComponents = function() {
+      var radians = this.getRadians();
+      
+      this.vx = this.getVelX(radians);
+      this.vy = this.getVelY(radians);
+    };
+    
+    DynamicBody.prototype.calculateSpritePosition = function() {
+      var spritePosition = this.position;
+      
+      spritePosition.x += this.vx;
+      spritePosition.y += this.vy;      
+    };
     
     DynamicBody.prototype.wallCollide = function() {
       var spritePosition = this.position,
