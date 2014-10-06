@@ -2,12 +2,14 @@
 <html lang='en'>
   <head>
 	  <title>Batty</title>
-		<script src='js/require.js'></script>
+		<script src='js/lib/require.js'></script>
 		<script>
 			require.config({
 			  baseUrl: '/js',
 				paths: {
-				  'pixi': 'pixi.dev'
+				  'pixi': 'lib/pixi.dev',
+					'modernizr': 'lib/modernizr',
+					'batty': 'src/batty'
 				},
 				shim: {
 				  'modernizr': {
