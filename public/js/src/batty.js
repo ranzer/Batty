@@ -94,12 +94,9 @@ define(['pixi'], function(PIXI) {
         return;
       }
       
-      var radians = this.angle * Math.PI / 180;
-      
-      this.vx = this.vel * Math.cos(radians);
-      this.vy = this.vel * Math.sin(radians);
+      this.calculateVelComponents();
     }
-    
+		
     DynamicBody.prototype.blocksCollide = function() {
       var blocks = this.getCollidableBodies(),
           blocksLength = blocks.length,
