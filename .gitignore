@@ -1,3 +1,4 @@
-tests/lib/*
-tests/src/*
-tests/results/*
+tests/lib/**
+tests/src/**
+tests/results/**
+diff.txt
