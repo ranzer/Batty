@@ -215,64 +215,171 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       expect(dynamicBodyMock.position.x).to.be.equal(1);
       expect(dynamicBodyMock.position.y).to.be.equal(2);
     });
-    test('wallCollide when sprite position exceeds the right boundary of the world', function(done) {
-      var doneCallback,
-          position;
-      
-      doneCallback = function(dynamicBodyMock) {
-        expect(dynamicBodyMock.angle).to.be.equal(180 - dynamicBodyMock.startAngle);
-        expect(dynamicBodyMock.position.x).to.be.equal(dynamicBodyMock.world.width - dynamicBodyMock.width);
-        expect(dynamicBodyMock.calculateVelComponents.calledOnce).to.be.ok();
-      
-        done();
-      };
-      position = { x: 100 };
-      
-      testWallCollide(position, doneCallback);
-    });
-    test('wallCollide when sprite position exceeds the left boundary of the world', function(done) {
-      var doneCallback,
-          position;
-      
-      doneCallback = function(dynamicBodyMock) {
-        expect(dynamicBodyMock.angle).to.be.equal(180 - dynamicBodyMock.startAngle);
-        expect(dynamicBodyMock.position.x).to.be.equal(0);
-        expect(dynamicBodyMock.calculateVelComponents.calledOnce).to.be.ok();
+    suite('wallCollide', function() {
+      test('sprite position exceeds the right boundary of the world', function(done) {
+        var doneCallback,
+            position;
         
-        done();
-      };
-      position = { x: -1 };
-      
-      testWallCollide(position, doneCallback);
-    });
-    test('wallCollide when sprite position exceeds the top boundary of the world', function(done) {
-      var doneCallback,
-          position;
-      
-      doneCallback = function(dynamicBodyMock) {
-        expect(dynamicBodyMock.angle).to.be.equal(360 - dynamicBodyMock.startAngle);
-        expect(dynamicBodyMock.position.y).to.be.equal(0);
-        expect(dynamicBodyMock.calculateVelComponents.calledOnce).to.be.ok();
+        doneCallback = function(dynamicBodyMock) {
+          expect(dynamicBodyMock.angle).to.be.equal(180 - dynamicBodyMock.startAngle);
+          expect(dynamicBodyMock.position.x).to.be.equal(dynamicBodyMock.world.width - dynamicBodyMock.width);
+          expect(dynamicBodyMock.calculateVelComponents.calledOnce).to.be.ok();
         
-        done();
-      };
-      position = { x: 0, y: -1 };
-      
-      testWallCollide(position, doneCallback);
-    });
-    test('wallCollide when sprite position exceeds the bottom boundary of the world and the sprite is visible', function(done) {
-      var doneCallback,
-          position;
-      
-      doneCallback = function(dynamicBodyMock) {
-        expect(dynamicBodyMock.onOutOfScreen.calledOnce).to.be.ok();
-        expect(dynamicBodyMock.calculateVelComponents.notCalled).to.be.ok();
+          done();
+        };
+        position = { x: 100 };
         
-        done();
+        testWallCollide(position, doneCallback);
+      });
+      test('sprite position exceeds the left boundary of the world', function(done) {
+        var doneCallback,
+            position;
+        
+        doneCallback = function(dynamicBodyMock) {
+          expect(dynamicBodyMock.angle).to.be.equal(180 - dynamicBodyMock.startAngle);
+          expect(dynamicBodyMock.position.x).to.be.equal(0);
+          expect(dynamicBodyMock.calculateVelComponents.calledOnce).to.be.ok();
+          
+          done();
+        };
+        position = { x: -1 };
+        
+        testWallCollide(position, doneCallback);
+      });
+      test('sprite position exceeds the top boundary of the world', function(done) {
+        var doneCallback,
+            position;
+        
+        doneCallback = function(dynamicBodyMock) {
+          expect(dynamicBodyMock.angle).to.be.equal(360 - dynamicBodyMock.startAngle);
+          expect(dynamicBodyMock.position.y).to.be.equal(0);
+          expect(dynamicBodyMock.calculateVelComponents.calledOnce).to.be.ok();
+          
+          done();
+        };
+        position = { x: 0, y: -1 };
+        
+        testWallCollide(position, doneCallback);
+      });
+      test('sprite position exceeds the bottom boundary of the world and the sprite is visible', function(done) {
+        var doneCallback,
+            position;
+        
+        doneCallback = function(dynamicBodyMock) {
+          expect(dynamicBodyMock.onOutOfScreen.calledOnce).to.be.ok();
+          expect(dynamicBodyMock.calculateVelComponents.notCalled).to.be.ok();
+          
+          done();
+        };
+        position = { x: 0, y: 101 };
+        
+        testWallCollide(position, doneCallback);
+      });
+    });
+    suite('blocksCollide', function() {
+      var createDynamicBodyMock = function() {
+        return {
+          getCollidableBodies: function() {
+            return [ { id: 1 }, { id: 2 } ]
+          },
+          blockCollides: function(block) {
+          }
+        };
       };
-      position = { x: 0, y: 101 };
-      
-      testWallCollide(position, doneCallback);
+      /**
+       * The test doesn't work properly when getCollidableMethod 
+       * returns more then two collidable bodies.
+       */
+      test('no onBlockCollided methods defined', function() {
+        var dynamicBodyMock = createDynamicBodyMock(),
+            collidableBodies = dynamicBodyMock.getCollidableBodies(),
+            blockCollidesStub = sinon.stub(dynamicBodyMock, 'blockCollides');
+        
+        sinon.spy(dynamicBodyMock, 'getCollidableBodies');
+        blockCollidesStub.returns(false);
+        blockCollidesStub.withArgs(collidableBodies[1]).returns(true);
+        
+        Batty.DynamicBody.prototype.blocksCollide.call(dynamicBodyMock);
+          
+        expect(dynamicBodyMock.getCollidableBodies.calledOnce).to.be.ok();
+        expect(blockCollidesStub.returnValues[0]).to.not.be.ok();
+        expect(blockCollidesStub.returnValues[1]).to.be.ok();
+      });
+      test('onBlockCollided method defined', function() {
+        var dynamicBodyMock = createDynamicBodyMock(),
+            collidableBodies = dynamicBodyMock.getCollidableBodies(),
+            blockCollidesStub = sinon.stub(dynamicBodyMock, 'blockCollides');
+        
+        dynamicBodyMock.onBlockCollided = function(block) {
+        };
+        
+        sinon.spy(dynamicBodyMock, 'onBlockCollided');
+        blockCollidesStub.returns(false);
+        blockCollidesStub.withArgs(collidableBodies[0]).returns(true);
+        
+        Batty.DynamicBody.prototype.blocksCollide.call(dynamicBodyMock);
+        
+        expect(dynamicBodyMock.onBlockCollided.calledOnce).to.be.ok();
+        expect(dynamicBodyMock.onBlockCollided.calledWith(collidableBodies[0])).to.be.ok();
+        expect(dynamicBodyMock.onBlockCollided.calledWith(collidableBodies[1])).to.not.be.ok();
+      });
+    });
+    suite('blockCollides', function() {
+      var createDynamicBodyMock = function(visible) {
+        return {
+          visible: visible,
+          hitTestBlock: function() { return true; }
+        };
+      };
+      var testBlockCollides = function(options) {
+        var dynamicBodyMock = createDynamicBodyMock(bodyVisible),
+            options = options || {},
+            bodyVisible = options.bodyVisible == undefined ? true : options.bodyVisible,
+            blockVisible = options.blockVisible == undefined ? true : options.blockVisible,
+            doneCallback = options.doneCallback,
+            blockMock = { visible: blockVisible },
+            result;
+        
+        sinon.spy(dynamicBodyMock, 'hitTestBlock');
+        
+        result = Batty.DynamicBody.prototype.blockCollides.call(dynamicBodyMock, blockMock);
+        
+        alert(result);
+        
+        expect(dynamicBodyMock.hitTestBlock.calledOnce).to.be.ok();
+        expect(dynamicBodyMock.hitTestBlock.calledWith(blockMock)).to.be.ok();
+        
+        doneCallback(result);
+      };
+      test('returns true when body and block are visible and the block hits the body', function() {
+        var doneCallback;
+            
+        doneCallback = function(result) {
+          expect(result).to.be.ok();
+        };
+        
+        testBlockCollides({ doneCallback: doneCallback });
+      });
+      test('returns false when body is not visible', function() {
+        var bodyVisible = false,
+            doneCallback;
+         
+        doneCallback = function(result) {
+          expect(result).to.not.be.ok();
+        }
+        
+        testBlockCollides({ bodyVisible: bodyVisible, doneCallback: doneCallback });
+      });
+      test('returns false when block is not visible', function() {
+        var blockVisible = false,
+            doneCallback;
+         
+        doneCallback = function(result) {
+          expect(result).to.not.be.ok();
+        }
+        
+        testBlockCollides({ blockVisible: blockVisible, doneCallback: doneCallback });
+      });
     });
     teardown(function() {
       PIXI.Sprite.restore();
