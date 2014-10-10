@@ -105,7 +105,7 @@ define(['pixi'], function(PIXI) {
       
       for (i = 0; i < blocksLength; i++) {
         block = blocks[i];
-        if (this.visible && block.visible && this.hitTestBlock(block)) {
+        if (this.blockCollides(block)) {
           if (this.onBlockCollided) {
             this.onBlockCollided(block); 
           }
@@ -114,6 +114,12 @@ define(['pixi'], function(PIXI) {
         }
       }
     }
+    
+    DynamicBody.prototype.blockCollides = function(block) {
+      var isTestBlockHit = this.hitTestBlock(block);
+      
+      return this.visible && block.visible && isTestBlockHit;
+    };
     
     DynamicBody.prototype.hitTestBlock = function(block) {
       var position = this.position,
