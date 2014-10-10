@@ -332,19 +332,18 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         };
       };
       var testBlockCollides = function(options) {
-        var dynamicBodyMock = createDynamicBodyMock(bodyVisible),
-            options = options || {},
+        var options = options || {},
             bodyVisible = options.bodyVisible == undefined ? true : options.bodyVisible,
             blockVisible = options.blockVisible == undefined ? true : options.blockVisible,
             doneCallback = options.doneCallback,
+            hitTestReturnValue = options.hitTestReturnValue == undefined ? true : options.hitTestReturnValue,
             blockMock = { visible: blockVisible },
+            dynamicBodyMock = createDynamicBodyMock(bodyVisible),
             result;
         
-        sinon.spy(dynamicBodyMock, 'hitTestBlock');
+        sinon.stub(dynamicBodyMock, 'hitTestBlock').returns(hitTestReturnValue);
         
         result = Batty.DynamicBody.prototype.blockCollides.call(dynamicBodyMock, blockMock);
-        
-        alert(result);
         
         expect(dynamicBodyMock.hitTestBlock.calledOnce).to.be.ok();
         expect(dynamicBodyMock.hitTestBlock.calledWith(blockMock)).to.be.ok();
@@ -366,7 +365,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
          
         doneCallback = function(result) {
           expect(result).to.not.be.ok();
-        }
+        };
         
         testBlockCollides({ bodyVisible: bodyVisible, doneCallback: doneCallback });
       });
@@ -376,9 +375,18 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
          
         doneCallback = function(result) {
           expect(result).to.not.be.ok();
-        }
+        };
         
         testBlockCollides({ blockVisible: blockVisible, doneCallback: doneCallback });
+      });
+      test('returns false when given block object is not hit the body object', function() {
+        var doneCallback;
+        
+        doneCallback = function(result) {
+          expect(result).to.not.be.ok();
+        };
+        
+        testBlockCollides({ hitTestReturnValue: false, doneCallback: doneCallback });
       });
     });
     teardown(function() {
