@@ -389,6 +389,82 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         testBlockCollides({ hitTestReturnValue: false, doneCallback: doneCallback });
       });
     });
+    suite('hitTestBlock', function() {
+      var createBodyMock = function(x, y) {
+        return {
+          height: 100,
+          position: { x: x, y: y },
+          width: 100
+        }
+      };
+      var testHitTestBlock = function(bodyX, bodyY, blockX, blockY, doneCallback) {
+        var dynamicBodyMock = createBodyMock(bodyX, bodyY),
+            blockMock = createBodyMock(blockX, blockY),
+            result;
+            
+        result = Batty.DynamicBody.prototype.hitTestBlock.call(dynamicBodyMock, blockMock);
+        
+        if (doneCallback) {
+          doneCallback(result);
+        }
+      };
+      test('when the dynamic body object is left of the block object', function(done) {
+        testHitTestBlock(0, 0, 101, 0, function(result) {
+          expect(result).to.not.be.ok();
+           
+          done();
+        });
+      });      
+      test('when the dynamic body object is right of the block object', function(done) {
+        testHitTestBlock(101, 0, 0, 0, function(result) {
+          expect(result).to.not.be.ok();
+          
+          done();
+        });
+      });      
+      test('when the dynamic body object is top of the block object', function(done) {
+        testHitTestBlock(0, 0, 0, 101, function(result) {
+          expect(result).to.not.be.ok();
+          
+          done();
+        });
+      });
+      test('when the dynamic body object is bottom of the block object', function(done) {
+        testHitTestBlock(0, 101, 0, 0, function(result) {
+          expect(result).to.not.be.ok();
+          
+          done();
+        });
+      });      
+      test('when the dynamic body hits the block object from the left', function(done) {
+        testHitTestBlock(0, 0, 100, 0, function(result) {
+          expect(result).to.be.ok();
+          
+          done();
+        });
+      });
+      test('when the dynamic body hits the block object from the right', function(done) {
+        testHitTestBlock(100, 0, 0, 0, function(result) {
+          expect(result).to.be.ok();
+          
+          done();
+        });
+      });
+      test('when the dynamic body hits the block object from the top', function(done) {
+        testHitTestBlock(0, 0, 0, 100, function(result) {
+          expect(result).to.be.ok();
+          
+          done();
+        });
+      });
+      test('when the dynamic body hits the block object from the bottom', function(done) {
+        testHitTestBlock(0, 100, 0, 0, function(result) {
+          expect(result).to.be.ok();
+          
+          done();
+        });
+      });
+    });
     teardown(function() {
       PIXI.Sprite.restore();
       PIXI.Sprite.prototype.updateTransform.restore();
