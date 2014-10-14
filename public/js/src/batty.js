@@ -148,10 +148,10 @@ define(['pixi'], function(PIXI) {
       
       if (intersectionRect.width >= intersectionRect.height) {
         this.updateVerticalCoordinate(block);
-        this.angle = 360 - this.angle;
+        this.updateAngleReflectionHorizontally();
       } else {
         this.updateHorizontalCoordinate(block);
-        this.angle = 180 - this.angle;
+        this.updateAngleReflectionVertically();
       }
       
       radians = this.getRadians();
