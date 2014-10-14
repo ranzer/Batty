@@ -47,7 +47,9 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         calculateVelComponents: function() {},
         calculateSpritePosition: function() {},
         onUpdateTransformed: function() {},
-        onOutOfScreen: function() {}
+        onOutOfScreen: function() {},
+        updateAngleReflectionHorizontally: function(block) {},
+        updateAngleReflectionVertically: function(block) {}
       };  
       
       return dynamicBodyMock;
@@ -80,22 +82,6 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       
       Batty.DynamicBody.prototype.updateTransform.call(dynamicBodyMock);
       
-      doneCallback(dynamicBodyMock);
-    };
-    var testWallCollide = function(position, doneCallback) {
-      var dynamicBodyMock;
-
-      dynamicBodyMock = createDynamicBodyMock();
-      dynamicBodyMock.startAngle = dynamicBodyMock.angle;
-      dynamicBodyMock.world.width = 100;
-      dynamicBodyMock.world.heigth = 100;
-      dynamicBodyMock.position = position;
-      
-      sinon.spy(dynamicBodyMock, 'calculateVelComponents');
-      sinon.spy(dynamicBodyMock, 'onOutOfScreen');
-      
-      Batty.DynamicBody.prototype.wallCollide.call(dynamicBodyMock);
-    
       doneCallback(dynamicBodyMock);
     };
     test('construtor with default options', function(done) {
@@ -216,12 +202,30 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       expect(dynamicBodyMock.position.y).to.be.equal(2);
     });
     suite('wallCollide', function() {
+      var testWallCollide = function(position, doneCallback) {
+        var dynamicBodyMock;
+
+        dynamicBodyMock = createDynamicBodyMock();
+        dynamicBodyMock.startAngle = dynamicBodyMock.angle;
+        dynamicBodyMock.world.width = 100;
+        dynamicBodyMock.world.heigth = 100;
+        dynamicBodyMock.position = position;
+        
+        sinon.spy(dynamicBodyMock, 'calculateVelComponents');
+        sinon.spy(dynamicBodyMock, 'onOutOfScreen');
+        sinon.spy(dynamicBodyMock, 'updateAngleReflectionVertically');
+        sinon.spy(dynamicBodyMock, 'updateAngleReflectionHorizontally');
+        
+        Batty.DynamicBody.prototype.wallCollide.call(dynamicBodyMock);
+      
+        doneCallback(dynamicBodyMock);
+      };
       test('sprite position exceeds the right boundary of the world', function(done) {
         var doneCallback,
             position;
         
         doneCallback = function(dynamicBodyMock) {
-          expect(dynamicBodyMock.angle).to.be.equal(180 - dynamicBodyMock.startAngle);
+          expect(dynamicBodyMock.updateAngleReflectionVertically.calledOnce).to.be.ok();
           expect(dynamicBodyMock.position.x).to.be.equal(dynamicBodyMock.world.width - dynamicBodyMock.width);
           expect(dynamicBodyMock.calculateVelComponents.calledOnce).to.be.ok();
         
@@ -236,7 +240,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
             position;
         
         doneCallback = function(dynamicBodyMock) {
-          expect(dynamicBodyMock.angle).to.be.equal(180 - dynamicBodyMock.startAngle);
+          expect(dynamicBodyMock.updateAngleReflectionVertically.calledOnce).to.be.ok();
           expect(dynamicBodyMock.position.x).to.be.equal(0);
           expect(dynamicBodyMock.calculateVelComponents.calledOnce).to.be.ok();
           
@@ -246,12 +250,12 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         
         testWallCollide(position, doneCallback);
       });
-      test('sprite position exceeds the top boundary of the world', function(done) {
+      test('sprite position exceeds the bottom boundary of the world', function(done) {
         var doneCallback,
             position;
         
         doneCallback = function(dynamicBodyMock) {
-          expect(dynamicBodyMock.angle).to.be.equal(360 - dynamicBodyMock.startAngle);
+          expect(dynamicBodyMock.updateAngleReflectionHorizontally.calledOnce).to.be.ok();
           expect(dynamicBodyMock.position.y).to.be.equal(0);
           expect(dynamicBodyMock.calculateVelComponents.calledOnce).to.be.ok();
           
@@ -261,7 +265,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         
         testWallCollide(position, doneCallback);
       });
-      test('sprite position exceeds the bottom boundary of the world and the sprite is visible', function(done) {
+      test('sprite position exceeds the top boundary of the world and the sprite is visible', function(done) {
         var doneCallback,
             position;
         
@@ -275,6 +279,25 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         
         testWallCollide(position, doneCallback);
       });
+    });
+    test('updateAngleReflectionHorizontally', function() {
+      var dynamicBodyMock = {
+        angle: 30
+      };
+      
+      Batty.DynamicBody.prototype.updateAngleReflectionHorizontally.call(dynamicBodyMock);
+      
+      expect(dynamicBodyMock.angle).to.be.equal(330);
+    });
+    
+    test('updateAngleReflectionVertically', function() {
+      var dynamicBodyMock = {
+        angle: 30
+      };
+      
+      Batty.DynamicBody.prototype.updateAngleReflectionVertically.call(dynamicBodyMock);
+      
+      expect(dynamicBodyMock.angle).to.be.equal(150);
     });
     suite('blocksCollide', function() {
       var createDynamicBodyMock = function() {
