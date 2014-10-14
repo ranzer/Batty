@@ -49,7 +49,10 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         onUpdateTransformed: function() {},
         onOutOfScreen: function() {},
         updateAngleReflectionHorizontally: function(block) {},
-        updateAngleReflectionVertically: function(block) {}
+        updateAngleReflectionVertically: function(block) {},
+        getIntersectionRect: function(block) {},
+        updateVerticalCoordinate: function(block) {},
+        updateHorizontalCoordinate: function(block) {},
       };  
       
       return dynamicBodyMock;
@@ -483,6 +486,55 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       test('when the dynamic body hits the block object from the bottom', function(done) {
         testHitTestBlock(0, 100, 0, 0, function(result) {
           expect(result).to.be.ok();
+          
+          done();
+        });
+      });
+    });
+    suite('blockCollide', function() {
+      var testBlockCollide = function(dynamicBodyMock, doneCallback) {
+        var block = {};
+        
+        sinon.spy(dynamicBodyMock, 'getRadians');
+        sinon.spy(dynamicBodyMock, 'getVelX');
+        sinon.spy(dynamicBodyMock, 'getVelY');
+        
+        Batty.DynamicBody.prototype.blockCollide.call(dynamicBodyMock, block);
+        
+        expect(dynamicBodyMock.getIntersectionRect.calledOnce).to.be.ok();
+        expect(dynamicBodyMock.getIntersectionRect.calledWith(block)).to.be.ok();
+        expect(dynamicBodyMock.getRadians.calledOnce).to.be.ok();
+        expect(dynamicBodyMock.getVelX.calledOnce).to.be.ok();
+        expect(dynamicBodyMock.getVelY.calledOnce).to.be.ok();
+        
+        doneCallback(block);
+      };
+      test('when intersection width is greater or equal to intersection height', function(done) {
+        var dynamicBodyMock = createDynamicBodyMock();
+        
+        sinon.stub(dynamicBodyMock, 'getIntersectionRect').returns({ height: 1, width: 1 });
+        sinon.spy(dynamicBodyMock, 'updateVerticalCoordinate');
+        sinon.spy(dynamicBodyMock, 'updateAngleReflectionHorizontally');
+        
+        testBlockCollide(dynamicBodyMock, function(block) {
+          expect(dynamicBodyMock.updateVerticalCoordinate.calledOnce).to.be.ok();
+          expect(dynamicBodyMock.updateVerticalCoordinate.calledWith(block)).to.be.ok();
+          expect(dynamicBodyMock.updateAngleReflectionHorizontally.calledOnce).to.be.ok();
+          
+          done();
+        });
+      });
+      test('when intersection widht is less then intersection height', function(done) {
+        var dynamicBodyMock = createDynamicBodyMock();
+        
+        sinon.stub(dynamicBodyMock, 'getIntersectionRect').returns({ height: 1, width: 0 });
+        sinon.spy(dynamicBodyMock, 'updateHorizontalCoordinate');
+        sinon.spy(dynamicBodyMock, 'updateAngleReflectionVertically');
+        
+        testBlockCollide(dynamicBodyMock, function(block) {
+          expect(dynamicBodyMock.updateHorizontalCoordinate.calledOnce).to.be.ok();
+          expect(dynamicBodyMock.updateHorizontalCoordinate.calledWith(block)).to.be.ok();
+          expect(dynamicBodyMock.updateAngleReflectionVertically.calledOnce).to.be.ok();
           
           done();
         });
