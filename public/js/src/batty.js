@@ -79,13 +79,13 @@ define(['pixi'], function(PIXI) {
       var spritePosition = this.position,
           world = this.world;
       if (spritePosition.x + this.width > world.width) {
-        this.angle = 180 - this.angle;
+        this.updateAngleReflectionVertically();
         spritePosition.x = world.width - this.width;
       } else if (spritePosition.x < 0) {
-        this.angle = 180 - this.angle;
+        this.updateAngleReflectionVertically();
         spritePosition.x = 0;
       } else if (spritePosition.y < 0) {
-        this.angle = 360 - this.angle;
+        this.updateAngleReflectionHorizontally();
         spritePosition.y = 0;
       } else if (this.visible && spritePosition.y > world.height) {
         if (this.onOutOfScreen) {
@@ -96,6 +96,14 @@ define(['pixi'], function(PIXI) {
       
       this.calculateVelComponents();
     }
+    
+    DynamicBody.prototype.updateAngleReflectionHorizontally = function() {
+      this.angle = 360 - this.angle;
+    };
+    
+    DynamicBody.prototype.updateAngleReflectionVertically = function() {
+      this.angle = 180 - this.angle;
+    };
 		
     DynamicBody.prototype.blocksCollide = function() {
       var blocks = this.getCollidableBodies(),
@@ -139,28 +147,46 @@ define(['pixi'], function(PIXI) {
       var intersectionRect = this.getIntersectionRect(block);
       
       if (intersectionRect.width >= intersectionRect.height) {
-        if (this.position.y >= block.position.y + block.height / 2) {
-          this.position.y = block.position.y + block.height;
-        } else {
-          this.position.y = block.position.y - this.height;
-        }
-        
+        this.updateVerticalCoordinate(block);
         this.angle = 360 - this.angle;
       } else {
-        if (this.position.x < block.position.x) {
-          this.position.x = block.position.x - this.width;
-        } else {
-          this.position.x = block.position.x + block.width;
-        }
-        
+        this.updateHorizontalCoordinate(block);
         this.angle = 180 - this.angle;
       }
       
-      radians = this.angle * Math.PI / 180;
+      radians = this.getRadians();
       
-      this.vx = this.vel * Math.cos(radians);
-      this.vy = this.vel * Math.sin(radians);
+      this.vx = this.getVelX(radians);
+      this.vy = this.getVelY(radians);
     }
+    
+    /*
+     * The function updates vertical coordinate of the body.
+     * This function is called after body collides with a 
+     * block.
+     * @param {object} block the block with whom the body collided.
+     */
+    DynamicBody.prototype.updateVerticalCoordinate = function(block) {
+      if (this.position.y >= block.position.y + block.height / 2) {
+        this.position.y = block.position.y + block.height;
+      } else {
+        this.position.y = block.position.y - this.height;
+      }
+    };
+    
+    /*
+     * The function updates horizontal coordinate of the body.
+     * This function is called after body collides with a 
+     * block.
+     * @param {object} block the block with whom the body collided.
+     */
+    DynamicBody.prototype.updateHorizontalCoordinate = function(block) {
+      if (this.position.x < block.position.x) {
+        this.position.x = block.position.x - this.width;
+      } else {
+        this.position.x = block.position.x + block.width;
+      }
+    };
     
     DynamicBody.prototype.getIntersectionRect = function(block) {
       var height, width;
