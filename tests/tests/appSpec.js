@@ -592,7 +592,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
     });
   });
   suite('Circle', function() {
-    test.skip('Circle constructor', function() {
+    test('Circle constructor', function() {
       var texture = {},
           worldMock = {},
           options = {},
@@ -607,6 +607,5 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
     });
     test.skip('onUpdateTransformed', function() {
     });
-    test('onBlockCollided
   });
 });
