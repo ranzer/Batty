@@ -190,7 +190,7 @@ define(['pixi'], function(PIXI) {
     
     DynamicBody.prototype.getIntersectionRect = function(block) {
       var height, width;
-      
+  
       var x11 = this.position.x,
           y11 = this.position.y,
           x12 = this.position.x + this.width,
@@ -200,10 +200,19 @@ define(['pixi'], function(PIXI) {
           x22 = block.position.x + block.width,
           y22 = block.position.y + block.height;
       
-      width = Math.max(0, Math.min(x12, x22) - Math.max(x11, x21));
-      height = Math.max(0, Math.min(y12, y22) - Math.max(y11, y21));
+      width = this.getMaxIntersection(x11, x12, x21, x22);//Math.max(0, Math.min(x12, x22) - Math.max(x11, x21));
+      height = this.getMaxIntersection(y11, y12, y21, y22);//Math.max(0, Math.min(y12, y22) - Math.max(y11, y21));
       
       return { width: width, height: height };
+    };
+    
+    DynamicBody.prototype.getMaxIntersection = function(
+      firstObjectMinPos, firstObjectMaxPos, 
+      secondObjectMinPos, secondObjectMaxPos) {
+      var minPos = Math.min(firstObjectMaxPos, secondObjectMaxPos);
+      var maxPos = Math.max(firstObjectMinPos, secondObjectMinPos);
+      
+      return Math.max(0, minPos - maxPos);
     };
     
     DynamicBody.prototype.onUpdateTransformed = null;
