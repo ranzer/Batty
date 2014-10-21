@@ -20,6 +20,11 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
     var createDefaultTexture = function() {
       return PIXI.TextureCache[Batty.World.prototype.BALL_TEXTURE_NAME];
     };
+    var callPrototypeMethod = function(klass, method, obj, args) {
+      var fn = Batty[klass].prototype[method];
+      
+      return fn.apply(obj, args);
+    };
     var createDynamicBodyObject = function(texture, world, options) {
       var texture = texture || createDefaultTexture(),
           world = world || {},
@@ -87,7 +92,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       
       doneCallback(dynamicBodyMock);
     };
-    test('construtor with default options', function(done) {
+    test('DynamicBody construtor with default options', function(done) {
       var texture = createDefaultTexture(),
           worldMock = {},
           options = {},
@@ -104,7 +109,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       
       testDynamicBodyConstructor(texture, worldMock, options, doneCallback);
     });
-    test('constructor with non-default options', function(done) {
+    test('DynamicBody constructor with non-default options', function(done) {
       var texture = createDefaultTexture(),
           worldMock = {},
           options = { vel: 1, x: 2, y: 3, angle: 4 },
@@ -524,7 +529,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
           done();
         });
       });
-      test('when intersection widht is less then intersection height', function(done) {
+      test('when intersection width is less then intersection height', function(done) {
         var dynamicBodyMock = createDynamicBodyMock();
         
         sinon.stub(dynamicBodyMock, 'getIntersectionRect').returns({ height: 1, width: 0 });
@@ -540,9 +545,68 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         });
       });
     });
+    test.skip('updateVerticalCoordinate', function() {
+    });
+    test.skip('updateHorizontalCoordinate', function() {
+    });
+    test('getIntersectionRect', function() {
+      var dynamicBodyMock = {
+            position: { x: 0, y: 0 },
+            height: 30,
+            width: 20,
+            getMaxIntersection: function() {}
+          },
+          blockMock = {
+            position: { x: 10, y: 10 },
+            height: 40,
+            width: 30          
+          },
+          result,
+          getMaxIntersectionFirstCallArgs,
+          getMaxIntersectionSecondCallArgs;
+      
+      sinon.stub(dynamicBodyMock, 'getMaxIntersection').returns(10);
+    
+      result = callPrototypeMethod('DynamicBody', 'getIntersectionRect', dynamicBodyMock, [ blockMock ]);
+      
+      getMaxIntersectionFirstCallArgs = dynamicBodyMock.getMaxIntersection.firstCall.args;
+      getMaxIntersectionSecondCallArgs = dynamicBodyMock.getMaxIntersection.secondCall.args;
+      
+      expect(result.height).to.be.equal(10);
+      expect(result.width).to.be.equal(10);
+      expect(dynamicBodyMock.getMaxIntersection.callCount).to.be.equal(2);
+      expect(getMaxIntersectionFirstCallArgs[0]).to.be.equal(dynamicBodyMock.position.x);
+      expect(getMaxIntersectionFirstCallArgs[1]).to.be.equal(dynamicBodyMock.position.x + dynamicBodyMock.width);
+      expect(getMaxIntersectionFirstCallArgs[2]).to.be.equal(blockMock.position.x);
+      expect(getMaxIntersectionFirstCallArgs[3]).to.be.equal(blockMock.position.x + blockMock.width);
+      expect(getMaxIntersectionSecondCallArgs[0]).to.be.equal(dynamicBodyMock.position.y);
+      expect(getMaxIntersectionSecondCallArgs[1]).to.be.equal(dynamicBodyMock.position.y + dynamicBodyMock.height);
+      expect(getMaxIntersectionSecondCallArgs[2]).to.be.equal(blockMock.position.y);
+      expect(getMaxIntersectionSecondCallArgs[3]).to.be.equal(blockMock.position.y + blockMock.height);
+    });
+    test.skip('getMaxIntersection', function() {
+    }); 
     teardown(function() {
       PIXI.Sprite.restore();
       PIXI.Sprite.prototype.updateTransform.restore();
     });
+  });
+  suite('Circle', function() {
+    test.skip('Circle constructor', function() {
+      var texture = {},
+          worldMock = {},
+          options = {},
+          circle;
+          
+      circle = new Batty.Circle(texture, world, options);
+      
+      expect(circle instanceof Batty.DynamicBody).to.be.ok();
+      expect(circle.type).to.be.equal('circle');
+    });
+    test.skip('getCollidableBodies', function() {
+    });
+    test.skip('onUpdateTransformed', function() {
+    });
+    test('onBlockCollided
   });
 });
