@@ -200,9 +200,9 @@ define(['pixi'], function(PIXI) {
           x22 = block.position.x + block.width,
           y22 = block.position.y + block.height;
       
-      width = this.getMaxIntersection(x11, x12, x21, x22);//Math.max(0, Math.min(x12, x22) - Math.max(x11, x21));
-      height = this.getMaxIntersection(y11, y12, y21, y22);//Math.max(0, Math.min(y12, y22) - Math.max(y11, y21));
-      
+			width = this.getMaxIntersection(x11, x12, x21, x22);
+      height = this.getMaxIntersection(y11, y12, y21, y22);
+			
       return { width: width, height: height };
     };
     
@@ -266,7 +266,7 @@ define(['pixi'], function(PIXI) {
       this.action = options.action;
       this.textures = textures;
       this.animationSpeed = options.animationSpeed || 1;
-      this.loop = options.loop || true;
+      this.loop = typeof(options.loop) != 'undefined' ? options.loop : true;
       this.onComplete = options.onComplete || null;
       this.currentFrame = options.currentFrame || 0;
       this.playing = options.playing || false;
