@@ -1,6 +1,14 @@
 define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
   var Batty = Batty(window);
-  suite('DynamicBody', function() {
+  var callPrototypeMethod = function(klass, method, obj, args) {
+		var fn = Batty[klass].prototype[method];
+		
+		return fn.apply(obj, args);
+	};
+	var createDefaultTexture = function() {
+		return PIXI.TextureCache[Batty.World.prototype.BALL_TEXTURE_NAME];
+	};
+	suite('DynamicBody', function() {
     setup(function(done) {
       var assets = [ 'base/SpriteSheetTest.json' ],
           assetLoader = new PIXI.AssetLoader(assets);
@@ -16,14 +24,6 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
     });    
     var getRadians = function(angle) {
       return angle * Math.PI / 180;
-    };
-    var createDefaultTexture = function() {
-      return PIXI.TextureCache[Batty.World.prototype.BALL_TEXTURE_NAME];
-    };
-    var callPrototypeMethod = function(klass, method, obj, args) {
-      var fn = Batty[klass].prototype[method];
-      
-      return fn.apply(obj, args);
     };
     var createDynamicBodyObject = function(texture, world, options) {
       var texture = texture || createDefaultTexture(),
@@ -568,8 +568,8 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       sinon.stub(dynamicBodyMock, 'getMaxIntersection').returns(10);
     
       result = callPrototypeMethod('DynamicBody', 'getIntersectionRect', dynamicBodyMock, [ blockMock ]);
-      
-      getMaxIntersectionFirstCallArgs = dynamicBodyMock.getMaxIntersection.firstCall.args;
+			
+			getMaxIntersectionFirstCallArgs = dynamicBodyMock.getMaxIntersection.firstCall.args;
       getMaxIntersectionSecondCallArgs = dynamicBodyMock.getMaxIntersection.secondCall.args;
       
       expect(result.height).to.be.equal(10);
@@ -592,13 +592,13 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
     });
   });
   suite('Circle', function() {
-    test('Circle constructor', function() {
-      var texture = {},
+    test('constructor', function() {
+      var texture = createDefaultTexture(),
           worldMock = {},
           options = {},
           circle;
           
-      circle = new Batty.Circle(texture, world, options);
+      circle = new Batty.Circle(texture, worldMock, options);
       
       expect(circle instanceof Batty.DynamicBody).to.be.ok();
       expect(circle.type).to.be.equal('circle');
@@ -607,5 +607,110 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
     });
     test.skip('onUpdateTransformed', function() {
     });
+		suite('onBlockCollided', function() {
+		  var createCircleMock = function() {
+				return {
+					blockCollide: function() {},
+					world: {
+						removeBlock: function() {}
+					}
+				}
+			};
+			var testBlock = function(circleMock, blockMock, assertCallback) {
+				sinon.spy(circleMock, 'blockCollide');
+				sinon.spy(circleMock.world, 'removeBlock');
+				
+				callPrototypeMethod('Circle', 'onBlockCollided', circleMock, [ blockMock ]);
+				
+				expect(circleMock.blockCollide.callCount).to.be.equal(1);
+				expect(circleMock.blockCollide.calledWith(blockMock)).to.be.ok();
+				expect(circleMock.world.removeBlock.callCount).to.be.equal(1);
+				expect(circleMock.world.removeBlock.calledWith(blockMock)).to.be.ok();
+				
+				if (assertCallback) {
+				  assertCallback(circleMock);
+				};
+			};
+			test('when block is of block type', function() {
+			  var circleMock = createCircleMock(),
+				    blockMock = { type: 'block' };
+				
+				testBlock(circleMock, blockMock);
+			});
+			test('when block is of block type and has gift', function(done) {
+			  var circleMock = createCircleMock(),
+						blockMock = { type: 'block', gift: {} },
+						assertCallback;
+						
+				circleMock.world.addGift = function() {};
+				
+				sinon.spy(circleMock.world, 'addGift');
+				
+				assertCallback = function(circleMock) {
+				  expect(circleMock.world.addGift.callCount).to.be.equal(1);
+					expect(circleMock.world.addGift.calledWith(blockMock.gift)).to.be.ok();
+					
+					done();
+				};
+				
+				testBlock(circleMock, blockMock, assertCallback);
+			});
+			test('when block is of slider type', function() {
+			  var circleMock = createCircleMock(),
+						blockMock = { type: 'slider' };
+				
+				sinon.spy(circleMock, 'blockCollide');
+				
+				callPrototypeMethod('Circle', 'onBlockCollided', circleMock, [ blockMock ]);
+				
+				expect(circleMock.blockCollide.callCount).to.be.equal(1);
+				expect(circleMock.blockCollide.calledWith(blockMock)).to.be.ok();
+			});
+		});
   });
+	suite('Gift', function() {
+		test('default constructor', function() {
+		  var textures = [ createDefaultTexture() ],
+					world = {},
+					gift;
+					
+			gift = new Batty.Gift(textures, world);
+			
+			expect(gift.angle).to.be.equal(90);
+			expect(gift.action).to.be.equal(undefined);
+			expect(gift.textures).to.be.equal(textures);
+			expect(gift.animationSpeed).to.be.equal(1);
+			expect(gift.loop).to.be.ok();
+			expect(gift.onComplete).to.be.equal(null);
+			expect(gift.currentFrame).to.be.equal(0);
+			expect(gift.playing).to.not.be.ok();
+			expect(gift.type).to.be.equal('gift');
+		});
+		test('options constructor', function() {
+		  var textures = [ createDefaultTexture() ],
+					world = {},
+					options = { 
+						angle: 30,
+						action: function() {},
+						animationSpeed: 2,
+						loop: false,
+						onComplete: function() {},
+						currentFrame: 1,
+						playing: true
+					},
+					gift;
+					
+			gift = new Batty.Gift(textures, world, options);
+			
+			expect(gift.angle).to.be.equal(options.angle);
+			expect(gift.action).to.be.equal(options.action);
+			expect(gift.textures).to.be.equal(textures);
+			expect(gift.animationSpeed).to.be.equal(options.animationSpeed);
+			expect(gift.loop).to.be.equal(options.loop);
+			expect(gift.onComplete).to.be.equal(options.onComplete);
+			expect(gift.currentFrame).to.be.equal(options.currentFrame);
+			expect(gift.playing).to.be.equal(options.playing);
+			expect(gift.type).to.be.equal('gift');
+		});
+	});
 });
