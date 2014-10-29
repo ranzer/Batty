@@ -712,5 +712,86 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
 			expect(gift.playing).to.be.equal(options.playing);
 			expect(gift.type).to.be.equal('gift');
 		});
+		test.skip('prototype', function() {
+		});
+		test.skip('onUpdateTransformed', function() {
+		});
+		test.skip('getCollidableBodies', function() {
+		});
+		suite('onBlockCollided', function() {
+			var createGiftMock = function() {
+			  var actionInit = function() {};
+				var mock = {
+					actionInit: actionInit,
+					action: function() {
+						return {
+							init: this.actionInit
+						}
+					},
+					world: {
+						slider: {},
+						removeGift: function() {}
+					}
+				};
+				
+				sinon.spy(mock.world, 'removeGift');
+				sinon.spy(mock, 'action');
+				sinon.spy(mock, 'actionInit');
+				
+				return mock;
+			};
+			test('when block is not of slider type', function() {
+			  var giftMock = createGiftMock(),
+						blockMock = { type: 'none' };
+				
+				callPrototypeMethod('Gift', 'onBlockCollided', giftMock, [ blockMock ]);
+				
+				expect(giftMock.world.removeGift.callCount).to.be.equal(0);
+				expect(giftMock.action.callCount).to.be.equal(0);
+				expect(giftMock.actionInit.callCount).to.be.equal(0);
+			});
+			test('when block is of slider type and there is no action', function() {
+			  var giftMock = createGiftMock(),
+						blockMock = { type: 'slider' };
+						
+				giftMock.action = null;
+				
+				callPrototypeMethod('Gift', 'onBlockCollided', giftMock, [ blockMock ]);
+				
+				expect(giftMock.world.removeGift.callCount).to.be.equal(1);
+				expect(giftMock.world.removeGift.calledWith(giftMock)).to.be.ok();
+				expect(giftMock.actionInit.callCount).to.be.equal(0);
+			});
+			test('when block is of slider type and there is an action', function() {
+				var giftMock = createGiftMock(),
+						blockMock = { type: 'slider' };
+				
+				callPrototypeMethod('Gift', 'onBlockCollided', giftMock, [ blockMock ]);
+				
+				expect(giftMock.world.removeGift.callCount).to.be.equal(1);
+				expect(giftMock.world.removeGift.calledWith(giftMock)).to.be.ok();
+				expect(giftMock.action.callCount).to.be.equal(1);
+				expect(giftMock.action.calledWith(giftMock.world.slider)).to.be.ok();
+				expect(giftMock.actionInit.callCount).to.be.equal(1);				
+			});
+		});
+		suite('Balls3Gift', function() {
+		  test.skip('default constructor', function() {
+			});
+			test.skip('non-default constructor', function() {
+			});
+		});
+		suite('HandGift', function() {
+		  test.skip('default constructor', function() {
+			});
+			test.skip('non-default constructor', function() {
+			});
+		});
+		suite('Slider', function() {
+		  test.skip('default constructor', function() {
+			});
+			test.skip('non-default constructor', function() {
+			});
+		});
 	});
 });
