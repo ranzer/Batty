@@ -490,10 +490,6 @@ define(['pixi'], function(PIXI) {
       return this.world.circles;
     };
     
-    Slider.prototype.onBlockCollided = function() {
-      console.log('slider block collied');
-    };
-    
     Slider.prototype.constructor = Slider;
     
     Slider.prototype.addAction = function(type, action) {
