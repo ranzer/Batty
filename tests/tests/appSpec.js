@@ -807,7 +807,8 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
 						completeCallback = function() {
 							sinon.spy(Batty, 'DynamicBody');
 							sinon.spy(window, 'addEventListener');	
-							
+							sinon.spy(Batty.Slider.prototype, 'addAction');		
+				
 							done();
 						};
    
@@ -817,8 +818,6 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
 				var texture = createDefaultTexture(),
 						worldMock = createWorldMock(),
 						slider;
-				
-				sinon.spy(Batty.Slider.prototype, 'addAction');
 				
 				slider = new Batty.Slider(texture, worldMock);
 				
@@ -832,12 +831,104 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
 				expect(slider.addAction.callCount).to.be.equal(2);
 				expect(window.addEventListener.callCount).to.be.equal(2);
 			});
-			test.skip('non-default constructor', function() {
+			test('non-default constructor', function() {
+				var texture = createDefaultTexture(),
+						worldMock = createWorldMock(),
+						options = {
+							x: 10,
+							y: 15,
+							vel1: 20
+						},
+						slider;
 				
+				slider = new Batty.Slider(texture, worldMock, options);
+				
+				expect(slider.x).to.be.equal(options.x);
+				expect(slider.y).to.be.equal(options.y);
+				expect(slider.angle).to.be.equal(0);
+				expect(slider.vel1).to.be.equal(options.vel1);
+				expect(slider.type).to.be.equal('slider');
+				expect(slider.maxX).to.be.equal(worldMock.width - texture.frame.width);
+				expect(slider.actions).to.be.an('object');
+				expect(slider.addAction.callCount).to.be.equal(2);
+				expect(window.addEventListener.callCount).to.be.equal(2);
 			});
 			teardown(function() {
 				Batty.DynamicBody.restore();
+				Batty.Slider.prototype.addAction.restore();
 				window.addEventListener.restore();
+			});
+		});
+		test('getCollidableBodies', function() {
+			var sliderMock = { 
+						world: {
+							circles: []
+						}
+					},
+					collidableBodies;
+			
+			collidableBodies = callPrototypeMethod('Slider', 'getCollidableBodies', sliderMock);
+		
+			expect(collidableBodies).to.be.equal(sliderMock.world.circles);
+		});
+		test('addAction', function() {
+			var sliderMock = {
+					  actions: {
+						}
+					},
+					type1 = 'type1',
+					type2 = 'type2',
+					action1 = function() {},
+					action2 = function() {};
+			
+			callPrototypeMethod('Slider', 'addAction', sliderMock, [ type1, action1 ]);
+			callPrototypeMethod('Slider', 'addAction', sliderMock, [ type2, action2 ]);
+			
+			expect(sliderMock.actions).to.only.have.keys([ type1, type2 ]);
+			expect(sliderMock.actions[type1]).to.have.length(1);
+			expect(sliderMock.actions[type2]).to.have.length(1);
+			expect(sliderMock.actions[type1]).to.contain(action1);
+			expect(sliderMock.actions[type2]).to.contain(action2);
+		});
+		suite('removeAction', function() {
+			var createSliderMock = function() {
+				return {
+					actions: {
+						'type1': [
+							function() {}
+						]
+					}
+				};		
+			};		
+		  test('when type does not exist', function() {
+				var sliderMock = createSliderMock(),
+						type = 'nonExistingType';
+				
+				callPrototypeMethod('Slider', 'removeAction', sliderMock, [ type, null ]);
+				
+				expect(sliderMock.actions).to.only.have.key('type1');
+			});
+			test('when type and action exist', function() {
+				var sliderMock = createSliderMock();
+						newType = 'type2',
+						newAction = function() {};
+				
+				sliderMock.actions[newType] = [ newAction ];
+				
+				callPrototypeMethod('Slider', 'removeAction', sliderMock, [ newType, newAction ]);
+				
+				expect(sliderMock.actions).to.only.have.keys([ 'type1', newType ]);
+				expect(sliderMock.actions[newType]).to.have.length(0);
+			});
+			test('when type exists and action do not', function() {
+				var sliderMock = createSliderMock(),
+						type = 'type1',
+						action = function() {};
+				
+				callPrototypeMethod('Slider', 'removeAction', sliderMock, [ type, action ]);
+				
+				expect(sliderMock.actions).to.only.have.key('type1');
+				expect(sliderMock.actions[type]).to.have.length(1);
 			});
 		});
 	});
