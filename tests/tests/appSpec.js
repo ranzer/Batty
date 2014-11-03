@@ -8,19 +8,26 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
 	var createDefaultTexture = function() {
 		return PIXI.TextureCache[Batty.World.prototype.BALL_TEXTURE_NAME];
 	};
+	var loadAssets = function(assets, completeCallback) {
+		var assetLoader = new PIXI.AssetLoader(assets);
+		
+		assetLoader.onComplete = function() {
+			completeCallback();
+		};
+ 
+		assetLoader.load();
+	};
 	suite('DynamicBody', function() {
     setup(function(done) {
       var assets = [ 'base/SpriteSheetTest.json' ],
-          assetLoader = new PIXI.AssetLoader(assets);
-      
-      assetLoader.onComplete = function() {
-        sinon.spy(PIXI, 'Sprite');
-        sinon.stub(PIXI.Sprite.prototype, 'updateTransform');
-        
-        done();
-      };
+					completeCallback = function() {
+						sinon.spy(PIXI, 'Sprite');
+						sinon.stub(PIXI.Sprite.prototype, 'updateTransform');
+						
+						done();
+					};
    
-      assetLoader.load();
+      loadAssets(assets, completeCallback);
     });    
     var getRadians = function(angle) {
       return angle * Math.PI / 180;
@@ -97,8 +104,8 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
           worldMock = {},
           options = {},
           doneCallback;
-    
-      doneCallback = function(dynamicBody) {
+			
+			doneCallback = function(dynamicBody) {
         expect(dynamicBody.vel).to.be.equal(15);
         expect(dynamicBody.position.x).to.be.equal(dynamicBody.width + 1);
         expect(dynamicBody.position.y).to.be.equal(dynamicBody.height + 1);
@@ -297,7 +304,6 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       
       expect(dynamicBodyMock.angle).to.be.equal(330);
     });
-    
     test('updateAngleReflectionVertically', function() {
       var dynamicBodyMock = {
         angle: 30
@@ -585,7 +591,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       expect(getMaxIntersectionSecondCallArgs[3]).to.be.equal(blockMock.position.y + blockMock.height);
     });
     test.skip('getMaxIntersection', function() {
-    }); 
+    });
     teardown(function() {
       PIXI.Sprite.restore();
       PIXI.Sprite.prototype.updateTransform.restore();
@@ -775,22 +781,63 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
 				expect(giftMock.actionInit.callCount).to.be.equal(1);				
 			});
 		});
-		suite('Balls3Gift', function() {
-		  test.skip('default constructor', function() {
-			});
-			test.skip('non-default constructor', function() {
-			});
+	});
+	suite('Balls3Gift', function() {
+		test.skip('default constructor', function() {
 		});
-		suite('HandGift', function() {
-		  test.skip('default constructor', function() {
-			});
-			test.skip('non-default constructor', function() {
-			});
+		test.skip('non-default constructor', function() {
 		});
-		suite('Slider', function() {
-		  test.skip('default constructor', function() {
+	});
+	suite('HandGift', function() {
+		test.skip('default constructor', function() {
+		});
+		test.skip('non-default constructor', function() {
+		});
+	});
+	suite('Slider', function() {
+		var createWorldMock = function() {
+			return {
+				height: 100,
+				width: 200
+			}
+		};
+		suite('constructor', function() {
+			setup(function(done) {
+				var assets = [ 'base/SpriteSheetTest.json' ],
+						completeCallback = function() {
+							sinon.spy(Batty, 'DynamicBody');
+							sinon.spy(window, 'addEventListener');	
+							
+							done();
+						};
+   
+				loadAssets(assets, completeCallback);
+			});
+			test('default constructor', function() {			  
+				var texture = createDefaultTexture(),
+						worldMock = createWorldMock(),
+						slider;
+				
+				sinon.spy(Batty.Slider.prototype, 'addAction');
+				
+				slider = new Batty.Slider(texture, worldMock);
+				
+				expect(slider.x).to.be.equal(worldMock.width / 2 - texture.frame.width / 2);
+				expect(slider.y).to.be.equal(worldMock.height - texture.frame.height - 1);
+				expect(slider.angle).to.be.equal(0);
+				expect(slider.vel1).to.be.equal(15);
+				expect(slider.type).to.be.equal('slider');
+				expect(slider.maxX).to.be.equal(worldMock.width - texture.frame.width);
+				expect(slider.actions).to.be.an('object');
+				expect(slider.addAction.callCount).to.be.equal(2);
+				expect(window.addEventListener.callCount).to.be.equal(2);
 			});
 			test.skip('non-default constructor', function() {
+				
+			});
+			teardown(function() {
+				Batty.DynamicBody.restore();
+				window.addEventListener.restore();
 			});
 		});
 	});
