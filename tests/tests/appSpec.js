@@ -19,7 +19,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
 	};
 	suite('DynamicBody', function() {
     setup(function(done) {
-      var assets = [ 'base/SpriteSheetTest.json' ],
+      var assets = [ 'base/SpriteSheet.json' ],
 					completeCallback = function() {
 						sinon.spy(PIXI, 'Sprite');
 						sinon.stub(PIXI.Sprite.prototype, 'updateTransform');
@@ -803,7 +803,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
 		};
 		suite('constructor', function() {
 			setup(function(done) {
-				var assets = [ 'base/SpriteSheetTest.json' ],
+				var assets = [ 'base/SpriteSheet.json' ],
 						completeCallback = function() {
 							sinon.spy(Batty, 'DynamicBody');
 							sinon.spy(window, 'addEventListener');	
@@ -931,5 +931,61 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
 				expect(sliderMock.actions[type]).to.have.length(1);
 			});
 		});
+    suite('onKeyDown', function() {
+      var testOnKeyDown = function(keyCode, doneCallback) {
+        var sliderMock = { vel: 0, vel1: 10 },
+            event = { keyCode: keyCode };
+        
+        callPrototypeMethod('Slider', 'onKeyDown', sliderMock, [ event ]);
+        
+        doneCallback(sliderMock);
+      };
+      test('when key code is equal 37', function(done) {
+        testOnKeyDown(37, function(sliderMock) {
+          expect(sliderMock.vel).to.be.equal(-sliderMock.vel1);
+          done();
+        });
+      });
+      test('when key code is equal 39', function(done) {
+        testOnKeyDown(39, function(sliderMock) {
+          expect(sliderMock.vel).to.be.equal(sliderMock.vel1);
+          done();
+        });
+      });
+      test('when key code is neither 37 or 39', function(done) {
+        testOnKeyDown(40, function(sliderMock) {
+          expect(sliderMock.vel).to.be.equal(0);
+          done();
+        });
+      });
+    });
+    suite('onKeyUp', function() {
+      var testOnKeyDown = function(keyCode, doneCallback) {
+        var sliderMock = { vel: 10 },
+            event = { keyCode: keyCode };
+        
+        callPrototypeMethod('Slider', 'onKeyUp', sliderMock, [ event ]);
+        
+        doneCallback(sliderMock);
+      };
+      test('when key code is equal 37', function(done) {
+        testOnKeyDown(37, function(sliderMock) {
+          expect(sliderMock.vel).to.be.equal(0);
+          done();
+        });
+      });
+      test('when key code is equal 39', function(done) {
+        testOnKeyDown(39, function(sliderMock) {
+          expect(sliderMock.vel).to.be.equal(0);
+          done();
+        });
+      });
+      test('when key code is neither 37 or 39', function(done) {
+        testOnKeyDown(40, function(sliderMock) {
+          expect(sliderMock.vel).to.be.equal(10);
+          done();
+        });
+      });
+    });
 	});
 });
