@@ -19,7 +19,7 @@ module.exports = function(config) {
     
     // list of files / patterns to load in the browser
     files: [
-      { pattern: 'SpriteSheetTest.json', included: false },
+      { pattern: 'SpriteSheet.json', included: false },
       { pattern: 'lib/*.js', included: false },
       { pattern: 'src/*.js', included: false },
       { pattern: 'tests/*Spec.js', included: false },
