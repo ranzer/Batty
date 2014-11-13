@@ -987,5 +987,69 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         });
       });
     });
+    suite('triggerActions', function() {
+      var actionType = 'a1',
+          action = sinon.spy(),
+          sliderMock = {
+            actions: {
+              'a1': [ action ]
+            }
+          };
+      test('when there is no action of the specified type', function() {
+        var type = 'unknown_type',
+            eventMock = {};
+        
+        sinon.spy(action);
+        
+        callPrototypeMethod('Slider', 'triggerActions', sliderMock, [ type, eventMock ]);
+        
+        expect(action.notCalled).to.be.ok(0);
+      });
+      test('when there is an action of the specified type', function() {
+        var type = actionType,
+            eventMock = {};
+        
+        sinon.spy(action);
+        
+        callPrototypeMethod('Slider', 'triggerActions', sliderMock, [ type, eventMock ]);
+        
+        expect(action.callCount).to.be.equal(1);
+        expect(action.calledWith(eventMock)).to.be.ok();
+      });
+      teardown(function() {
+        action.reset();
+      });
+    });
+    suite('onUpdateTransformed', function() {
+      var sliderMock = {
+        position: {
+          x: 0
+        },
+        width: 0,
+        world: { 
+          width: 0
+        },
+        blocksCollide: sinon.spy()
+      };
+      test('when x coordinate is negative', function() {
+        sliderMock.position.x = -1;
+        
+        callPrototypeMethod('Slider', 'onUpdateTransformed', sliderMock);
+        
+        expect(sliderMock.position.x).to.be.equal(0);
+        expect(sliderMock.blocksCollide.callCount).to.be.equal(1);
+      });
+      test.skip('when sum of the slider\'s x coordinate and width are greater then the width of the world', function() {
+        sliderMock.position.x = -1;
+        
+        callPrototypeMethod('Slider', 'onUpdateTransformed', sliderMock);
+        
+        expect(sliderMock.position.x).to.be.equal(sliderMock.world.width - sliderMock.width);
+        expect(sliderMock.blocksCollide.callCount).to.be.equal(1);
+      });
+      teardown(function() {
+        sliderMock.blocksCollide.reset();
+      });
+    });
 	});
 });
