@@ -552,6 +552,7 @@ define(['pixi'], function(PIXI) {
       var x = 150,
           y = 150,
           world = this,
+          options = options || {},
           circle,
           block,
           gift,
