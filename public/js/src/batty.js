@@ -565,7 +565,7 @@ define(['pixi'], function(PIXI) {
       this.lostGame = false;
       this.wonGame = false;
       this.lostGameMessageShown = false;
-      this.wonGameMessageShow = false;
+      this.wonGameMessageShown = false;
       
       this.circleTexture = PIXI.TextureCache[this.BALL_TEXTURE_NAME];
       this.sliderTexture = PIXI.TextureCache[this.SLIDER_TEXTURE_NAME];
