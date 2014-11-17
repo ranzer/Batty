@@ -1039,7 +1039,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         expect(sliderMock.position.x).to.be.equal(0);
         expect(sliderMock.blocksCollide.callCount).to.be.equal(1);
       });
-      test.skip('when sum of the slider\'s x coordinate and width are greater then the width of the world', function() {
+      test('when sum of the slider\'s x coordinate and width are greater then the width of the world', function() {
         sliderMock.position.x = -1;
         
         callPrototypeMethod('Slider', 'onUpdateTransformed', sliderMock);
@@ -1052,4 +1052,63 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       });
     });
 	});
+  suite('World', function() {
+    setup(function(done) {
+      var assets = [ 'base/SpriteSheet.json' ];
+      loadAssets(assets, done.bind(null));
+    });
+    suite('constructor', function() {
+      var testContructor = function(world, doneCallback) {
+        expect(world.stage.backgroundColor).to.be.equal(0xffffff);
+        expect(world.lostGame).to.not.be.ok();
+        expect(world.wonGame).to.not.be.ok();
+        expect(world.lostGameMessageShow).to.not.be.ok();
+        expect(world.wonGameMessageShow).to.not.be.ok();
+        expect(world.circleTexture).to.be.equal(PIXI.TextureCache[Batty.World.prototype.BALL_TEXTURE_NAME]);
+        expect(world.sliderTexture).to.be.equal(PIXI.TextureCache[Batty.World.prototype.SLIDER_TEXTURE_NAME]);
+        expect(world.slider.texture).to.be.equal(PIXI.TextureCache[Batty.World.prototype.SLIDER_TEXTURE_NAME]);
+        expect(world.blocks).to.be.an(Array);
+        expect(world.gifts).to.be.an(Array);
+        expect(world.circles).to.be.an(Array);
+        expect(world.createCircle.callCount).to.be.equal(1);
+        expect(world.createCircle.args[0][0].x).to.be.equal(world.slider.x);
+        expect(world.createCircle.args[0][0].y).to.be.equal(world.slider.y - world.circleTexture.height);
+        expect(world.createCircle.args[0][0].angle).to.be.equal(225);
+        expect(world.createCircle.args[0][0].vel).to.be.equal(10);
+        expect(world.addCircle.callCount).to.be.equal(1);
+      //  expect(world.stage.addChild.callCount).to.be.equal(1);
+      //  expect(world.stage.addChild.calledWith(world.slider)).to.be.ok();
+          
+        if (doneCallback) {
+          doneCallback();
+        }
+      };
+      setup(function() {
+        sinon.spy(Batty.World.prototype, 'createCircle');
+        sinon.spy(Batty.World.prototype, 'addCircle');
+      //  sinon.spy(PIXI.DisplayObjectContainer.prototype, 'addChild');
+        sinon.spy(window.document.body, 'appendChild');
+      });
+      test('with default options', function(done) {
+        var options = {},
+            world = new Batty.World(options),
+            doneCallback;
+        
+        doneCallback = function() {
+          expect(world.width).to.be.equal(800);
+          expect(world.height).to.be.equal(600);
+          
+          done();
+        };
+        
+        testContructor(world, doneCallback);
+      });
+      teardown(function() {
+        Batty.World.prototype.createCircle.restore();
+        Batty.World.prototype.addCircle.restore();
+       // PIXI.DisplayObjectContainer.prototype.addChild.restore();
+        window.document.body.appendChild.restore();
+      });
+    });      
+  });
 });
