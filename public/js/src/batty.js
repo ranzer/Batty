@@ -578,7 +578,7 @@ define(['pixi'], function(PIXI) {
         throw new Error('The frameId ' + this.BALL_TEXTURE_NAME + ' does not exist in the texture cache ' + this);
       }
       
-      for (i = 0; i < 5; i++) {
+      for (i = 0; i < 1; i++) {
         circle = this.createCircle({
           x: this.slider.x,
           y: this.slider.y - this.circleTexture.height,
