@@ -1059,6 +1059,8 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
     });
     suite('constructor', function() {
       var testContructor = function(world, doneCallback) {
+        expect(world.blocksStartX).to.be.equal(150);
+        expect(world.blocksStartY).to.be.equal(150);
         expect(world.stage.backgroundColor).to.be.equal(0xffffff);
         expect(world.lostGame).to.not.be.ok();
         expect(world.wonGame).to.not.be.ok();
@@ -1070,12 +1072,10 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         expect(world.blocks).to.be.an(Array);
         expect(world.gifts).to.be.an(Array);
         expect(world.circles).to.be.an(Array);
-        expect(world.createCircle.callCount).to.be.equal(1);
-        expect(world.createCircle.args[0][0].x).to.be.equal(world.slider.x);
-        expect(world.createCircle.args[0][0].y).to.be.equal(world.slider.y - world.circleTexture.height);
-        expect(world.createCircle.args[0][0].angle).to.be.equal(225);
-        expect(world.createCircle.args[0][0].vel).to.be.equal(10);
-        expect(world.addCircle.callCount).to.be.equal(1);
+        expect(world.addCircles.callCount).to.be.equal(1);
+        expect(world.addCircles.calledWith(1, 225, 10)).to.be.ok();
+        expect(world.addBlocks.callCount).to.be.equal(1);
+        expect(world.addBlocks.calledWith(40)).to.be.ok();
       //  expect(world.stage.addChild.callCount).to.be.equal(1);
       //  expect(world.stage.addChild.calledWith(world.slider)).to.be.ok();
           
@@ -1084,8 +1084,8 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         }
       };
       setup(function() {
-        sinon.spy(Batty.World.prototype, 'createCircle');
-        sinon.spy(Batty.World.prototype, 'addCircle');
+        sinon.spy(Batty.World.prototype, 'addCircles');
+        sinon.spy(Batty.World.prototype, 'addBlocks');
       //  sinon.spy(PIXI.DisplayObjectContainer.prototype, 'addChild');
         sinon.spy(window.document.body, 'appendChild');
       });
@@ -1103,9 +1103,23 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         
         testContructor(world, doneCallback);
       });
+      test('with non-default options', function(done) {
+        var options = { height: 100, width: 200 },
+            world = new Batty.World(options),
+            doneCallback;
+        
+        doneCallback = function() {
+          expect(world.width).to.be.equal(options.width);
+          expect(world.height).to.be.equal(options.height);
+          
+          done();
+        };
+        
+        testContructor(world, doneCallback);
+      });
       teardown(function() {
-        Batty.World.prototype.createCircle.restore();
-        Batty.World.prototype.addCircle.restore();
+        Batty.World.prototype.addCircles.restore();
+        Batty.World.prototype.addBlocks.restore();
        // PIXI.DisplayObjectContainer.prototype.addChild.restore();
         window.document.body.appendChild.restore();
       });
