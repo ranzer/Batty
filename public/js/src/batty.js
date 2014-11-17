@@ -319,7 +319,8 @@ define(['pixi'], function(PIXI) {
     
     function Balls3Gift(world, options) {
       var balls3GiftTexturesLength = 6,
-          balls3GiftTextures = new Array();
+          balls3GiftTextures = new Array(),
+          i;
       
       for (i = 0; i < balls3GiftTexturesLength; i++) {
         balls3GiftTextures.push(PIXI.TextureCache['3balls' + i + '.png']);
@@ -357,7 +358,8 @@ define(['pixi'], function(PIXI) {
     
     function HandGift(world, options) {
       var HandGiftTexturesLength = 7,
-          HandGiftTextures = new Array();
+          HandGiftTextures = new Array(),
+          i;
       
       for (i = 0; i < HandGiftTexturesLength; i++) {
         HandGiftTextures.push(PIXI.TextureCache['hand' + i + '.png']);
@@ -549,15 +551,10 @@ define(['pixi'], function(PIXI) {
     };
     
     function World(options) {
-      var x = 150,
-          y = 150,
-          world = this,
-          options = options || {},
-          circle,
-          block,
-          gift,
-          i;
+      var options = options || {};
       
+      this.blocksStartX = 150;
+      this.blocksStartY = 150;
       this.width = options.width || 800;
       this.height = options.height || 600;
       this.renderer = PIXI.autoDetectRenderer(this.width, this.height);
@@ -578,18 +575,40 @@ define(['pixi'], function(PIXI) {
         throw new Error('The frameId ' + this.BALL_TEXTURE_NAME + ' does not exist in the texture cache ' + this);
       }
       
-      for (i = 0; i < 1; i++) {
+      this.addCircles(1, 225, 10);
+      this.addBlocks(40);
+      this.stage.addChild(this.slider);
+      this.blocks.push(this.slider);
+      
+      window.document.body.appendChild(this.renderer.view);
+    }
+    
+    World.prototype.BLOCKS_TEXTURE_NAMES = [ 'blue.png', 'purple.png', 'red.png', 'yellow.png' ],
+    World.prototype.BALL_TEXTURE_NAME = 'ball.png';
+    World.prototype.SLIDER_TEXTURE_NAME = 'slider.png';
+    World.prototype.removeBlock = function(block) {
+      this.removeBody(block, this.blocks);
+    };
+    
+    World.prototype.addCircles = function(circlesCount, angle, vel) {
+      var circle, i;
+      
+      for (i = 0; i < circlesCount; i++) {
         circle = this.createCircle({
           x: this.slider.x,
           y: this.slider.y - this.circleTexture.height,
-          angle: 225,
-          vel: 10
+          angle: angle,
+          vel: vel
         });
         
         this.addCircle(circle);
       }
+    };
+    
+    World.prototype.addBlocks = function(blocksCount) {
+      var i, block, gift;
       
-      for (i = 0; i < 40; i++) {
+      for (i = 0; i < blocksCount; i++) {
         blockTexture = PIXI.TextureCache[
           this.BLOCKS_TEXTURE_NAMES[i % this.BLOCKS_TEXTURE_NAMES.length]
         ];
@@ -600,8 +619,8 @@ define(['pixi'], function(PIXI) {
       
         block = new PIXI.Sprite(blockTexture);
         
-        block.position.x = x + i % 8 * 55 + 1;
-        block.position.y = y + Math.floor(i / 8) * 30;
+        block.position.x = this.blocksStartX + i % 8 * 55 + 1;
+        block.position.y = this.blocksStartY + Math.floor(i / 8) * 30;
         block.type = 'block';
         
         if (i == 0) {
@@ -633,18 +652,6 @@ define(['pixi'], function(PIXI) {
         this.stage.addChild(block);
         this.blocks.push(block);
       }
-      
-      this.stage.addChild(this.slider);
-      this.blocks.push(this.slider);
-      
-      window.document.body.appendChild(this.renderer.view);
-    }
-    
-    World.prototype.BLOCKS_TEXTURE_NAMES = [ 'blue.png', 'purple.png', 'red.png', 'yellow.png' ],
-    World.prototype.BALL_TEXTURE_NAME = 'ball.png';
-    World.prototype.SLIDER_TEXTURE_NAME = 'slider.png';
-    World.prototype.removeBlock = function(block) {
-      this.removeBody(block, this.blocks);
     };
     
     World.prototype.addGift = function(gift) {
