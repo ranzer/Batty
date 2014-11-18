@@ -1123,6 +1123,29 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
        // PIXI.DisplayObjectContainer.prototype.addChild.restore();
         window.document.body.appendChild.restore();
       });
-    });      
+    });
+    test('addCircles', function() {
+      var circleMock = {},
+          worldMock = {
+            slider: { x: 200, y: 150 },
+            circleTexture: { height: 50 },
+            createCircle: sinon.stub().returns(circleMock),
+            addCircle: sinon.spy()
+          },
+          circlesCount = 1,
+          angle = 220,
+          vel = 10,
+          createCircleFirstCallArgs;
+      
+      callPrototypeMethod('World', 'addCircles', worldMock, [ circlesCount, angle, vel ]);
+    
+      expect(worldMock.createCircle.callCount).to.be.equal(circlesCount);
+      expect(worldMock.createCircle.callCount).to.be.equal(circlesCount);
+      expect(worldMock.createCircle.args[0][0].x).to.be.equal(worldMock.slider.x);
+      expect(worldMock.createCircle.args[0][0].y).to.be.equal(worldMock.slider.y - worldMock.circleTexture.height);
+      expect(worldMock.createCircle.args[0][0].angle).to.be.equal(angle);
+      expect(worldMock.createCircle.args[0][0].vel).to.be.equal(vel);
+      expect(worldMock.addCircle.calledWith(circleMock)).to.be.ok();
+    });
   });
 });
