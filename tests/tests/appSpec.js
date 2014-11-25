@@ -1147,5 +1147,77 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       expect(worldMock.createCircle.args[0][0].vel).to.be.equal(vel);
       expect(worldMock.addCircle.calledWith(circleMock)).to.be.ok();
     });
+    test.skip('getBlockTexture', function() {});
+    test.skip('getBlockTextureName', function() {});
+    test.skip('createBlockFromTexture', function() {});
+    suite('getGiftForBlockAtIndex', function() {
+      var worldMock = {},
+          blockMock = {
+            position: { x: 0, y: 0 }
+          };
+      setup(function() {
+        sinon.spy(Batty, 'HandGift');
+        sinon.spy(Batty, 'Balls3Gift');
+      });
+      // The test is skipped because of the problem with spying HandGift function.
+      test.skip('when block index is equal 0', function() {
+        var index = 0,
+            gift;
+            
+        alert(Batty.HandGift);
+        
+        gift = callPrototypeMethod('World', 'getGiftForBlockAtIndex', worldMock, [ blockMock, index ]);
+        
+        alert(Batty.HandGift.callCount);
+        
+        expect(gift).to.be.a(Batty.HandGift);
+        expect(Batty.HandGift.args[0][0].animationSpeed).to.be.equal(0.1);
+        expect(Batty.HandGift.args[0][0].x).to.be.equal(blockMock.position.x);
+        expect(Batty.HandGift.args[0][0].y).to.be.equal(blockMock.position.y);
+        expect(Batty.HandGift.args[0][0].vel).to.be.equal(1);
+      });
+      // The test is skipped because of the problem with spying Balls3Gift function.
+      test.skip('when moduo of block index and 10 is equal 0', function() {
+      });
+      teardown(function() {
+        Batty.HandGift.restore();
+        Batty.Balls3Gift.restore();
+      });
+    });
+    test.skip('addBlocks', function() {
+      var blockMock = {
+            position: { x: 0, y: 0 }
+          },
+          worldMock = {
+            blocks: [],
+            BLOCKS_TEXTURES_NAME: [ 't1', 't2' ],
+            stage: {
+              addChild: sinon.spy()
+            },
+            getBlockTextureName: sinon.stub().returns('test'),
+            getBlockTexture: sinon.spy(),
+            createBlockFromTexture: sinon.stub().returns(blockMock), 
+          };
+      setup(function() {
+      });
+    });
+    test.skip('addGift', function() {
+    });
+    test.skip('removeGift', function() {
+    });
+    test.skip('addCircle', function() {
+    });
+    test.skip('createCircle', function() {
+    });
+    test.skip('removeCircle', function() {
+    });
+    test.skip('removeBody', function() {
+    });
+    test.skip('stopAnimation', function() {
+    });
+    test.skip('addMessage', function() {
+    });
+    test.skip('draw', function() {
+    });
   });
 });
