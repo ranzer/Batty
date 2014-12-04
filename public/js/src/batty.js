@@ -1,4 +1,4 @@
-define(['pixi'], function(PIXI) {
+define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
   return function(window) {
     function DynamicBody(texture, world, options) {
       var radians;
@@ -555,30 +555,33 @@ define(['pixi'], function(PIXI) {
       
       this.blocksStartX = 150;
       this.blocksStartY = 150;
-      this.width = options.width || 800;
-      this.height = options.height || 600;
-      this.renderer = PIXI.autoDetectRenderer(this.width, this.height);
       this.stage = new PIXI.Stage(0xffffff);
-      this.lostGame = false;
-      this.wonGame = false;
-      this.lostGameMessageShown = false;
-      this.wonGameMessageShown = false;
-      
+      this.gameStarted = false;
+      this.blockTextureWidth = PIXI.TextureCache[this.BLOCKS_TEXTURE_NAMES[0]].width;
+      this.blockTextureHeight = PIXI.TextureCache[this.BLOCKS_TEXTURE_NAMES[0]].height;
+      this.blocksDistHorizontal = 5;
+      this.blocksDistVertical = 5;
+      this.maxBlocksPerRow = options.maxBlocksPerRow || 16;
+      this.maxBlocksPerColumn = options.maxBlocksPerColumn || 10;
+      this.width = options.width || this.getDefaultWorldWidth();
+      this.height = options.height || this.getDefaultWorldHeight();
+      this.renderer = new PIXI.CanvasRenderer(this.width, this.height);
       this.circleTexture = PIXI.TextureCache[this.BALL_TEXTURE_NAME];
       this.sliderTexture = PIXI.TextureCache[this.SLIDER_TEXTURE_NAME];
-      this.slider = new Slider(this.sliderTexture, this, { vel: 0, vel1: 25 });
+      this.slider = new Slider(this.sliderTexture, this, { vel: 0, vel1: 35 });
       this.blocks = new Array();
       this.circles = new Array();
       this.gifts = new Array();
+      this.messages = {};
       
       if (!this.circleTexture) {
         throw new Error('The frameId ' + this.BALL_TEXTURE_NAME + ' does not exist in the texture cache ' + this);
       }
       
-      this.addCircles(1, 225, 10);
-      this.addBlocks(40);
-      this.stage.addChild(this.slider);
-      this.blocks.push(this.slider);
+      //this.addCircles(1, 225, 10);
+      //this.addBlocks(40);
+      //this.stage.addChild(this.slider);
+      //this.blocks.push(this.slider);
       
       window.document.body.appendChild(this.renderer.view);
     }
@@ -586,6 +589,9 @@ define(['pixi'], function(PIXI) {
     World.prototype.BLOCKS_TEXTURE_NAMES = [ 'blue.png', 'purple.png', 'red.png', 'yellow.png' ],
     World.prototype.BALL_TEXTURE_NAME = 'ball.png';
     World.prototype.SLIDER_TEXTURE_NAME = 'slider.png';
+    World.prototype.GAME_WON_MESSAGE = '0';
+    World.prototype.GAME_LOST_MESSAGE = '1';
+    World.prototype.LOADING_NEXT_LEVEL_MESSAGE = '2';
     World.prototype.removeBlock = function(block) {
       this.removeBody(block, this.blocks);
     };
@@ -605,49 +611,71 @@ define(['pixi'], function(PIXI) {
       }
     };
     
+    World.prototype.getBlockTexture = function(name) {
+      return PIXI.TextureCache[name];
+    };
+    
+    World.prototype.getBlockTextureName = function(index) {
+      return this.BLOCKS_TEXTURE_NAMES[index];
+    };
+    
+    World.prototype.createBlockFromTexture = function(blockTexture) {
+      var block = new PIXI.Sprite(blockTexture);
+      
+      block.type = 'block';
+      
+      return block;
+    };
+    
+    World.prototype.getGiftForBlockAtIndex = function(block, index) {
+      var gift;
+      
+      if (index == 0) {
+        gift = new HandGift(
+          this,
+          {
+            animationSpeed: 0.1,
+            x: block.position.x, 
+            y: block.position.y, 
+            vel: 1
+          }
+        );
+      } else if (index % 10 == 0) {
+        gift = new Balls3Gift(
+          this,
+          {
+            animationSpeed: 0.1,
+            x: block.position.x, 
+            y: block.position.y, 
+            vel: 1
+          }
+        );
+      } 
+      
+      return gift;
+    };
+    
     World.prototype.addBlocks = function(blocksCount) {
-      var i, block, gift;
+      var i, block, gift, blockTextureName;
       
       for (i = 0; i < blocksCount; i++) {
-        blockTexture = PIXI.TextureCache[
-          this.BLOCKS_TEXTURE_NAMES[i % this.BLOCKS_TEXTURE_NAMES.length]
-        ];
+        blockTextureName = this.getBlockTextureName(i % this.BLOCKS_TEXTURE_NAMES.length);
+        blockTexture = this.getBlockTexture(blockTextureName);
       
         if (!blockTexture) {
           throw new Error('The frameId ' + blockTexture + ' does not exist in the texture cache ' + this);  
         }
       
-        block = new PIXI.Sprite(blockTexture);
+        block = this.createBlockFromTexture(blockTexture);
         
         block.position.x = this.blocksStartX + i % 8 * 55 + 1;
         block.position.y = this.blocksStartY + Math.floor(i / 8) * 30;
-        block.type = 'block';
-        
-        if (i == 0) {
-          gift = new HandGift(
-            this,
-            {
-              animationSpeed: 0.1,
-              x: block.position.x, 
-              y: block.position.y, 
-              vel: 1
-            }
-          );
-          
+    
+        gift = this.getGiftForBlockAtIndex(block, i);
+    
+        if (gift) {
           block.gift = gift;
-        } else if (i % 10 == 0) {
-          gift = new Balls3Gift(
-            this,
-            {
-              animationSpeed: 0.1,
-              x: block.position.x, 
-              y: block.position.y, 
-              vel: 1
-            }
-          );
-          
-          block.gift = gift;
-        } 
+        }
         
         this.stage.addChild(block);
         this.blocks.push(block);
@@ -694,7 +722,35 @@ define(['pixi'], function(PIXI) {
       //this.stage.removeChild(body);
     };
     
-    World.prototype.stopAnimation = function() {
+    World.prototype.removeBodies = function(bodies, preRemoveCallback) {
+      var i = bodies.length;
+      
+      while (i--) {
+        if (preRemoveCallback) {
+          preRemoveCallback(bodies[i]);
+        }
+        this.stage.removeChild(bodies[i]);
+      }
+      bodies.length = 0;
+    };
+    
+    World.prototype.removeBlocks = function() {
+      this.removeBodies(this.blocks, function(body) {
+        if (body.gift) {
+          this.stage.removeChild(body.gift);
+        }
+      });
+    };
+    
+    World.prototype.removeCircles = function() {
+      this.removeBodies(this.circles);
+    };
+    
+    World.prototype.removeGifts = function() {
+      this.removeBodies(this.gifts);
+    };
+    
+    World.prototype.stopAnimation = function(stop) {
       var childBodies = this.stage.children,
           childBodiesLength = childBodies.length,
           i;
@@ -703,43 +759,351 @@ define(['pixi'], function(PIXI) {
         if (childBodies[i].type === 'circle' ||
             childBodies[i].type === 'slider' || 
             childBodies[i].type === 'gift') {
-          childBodies[i].stopAnimation = true;
+          childBodies[i].stopAnimation = stop;
         }
       }
     };
     
-    World.prototype.addMessage = function(message) {
-      var message = new PIXI.Text(message, {
-        font: 'bold 40px Arial',
-        fill: '#0000ff'
-      });
+    World.prototype.addMessage = function(messageId, message) {
+      var x = this.width / 2,
+          y = this.height / 2;
       
       message.anchor.x = 0.5;
       message.anchor.y = 0.5;
       
-      message.position.x = this.width / 2;
-      message.position.y = this.height / 2;
+      message.position.x = x;
+      message.position.y = y;
       
+      this.messages[messageId] = message;
       this.stage.addChild(message);
     };
     
+    World.prototype.showMessage = function(id, text) {
+      var message, deferred;
+      
+      message = this.messages[id];
+      
+      if (!message) {
+        message = new Message(text);
+      
+        this.addMessage(id, message);        
+      } else {
+        message.setText(text);
+      }
+      
+      if (!this.isMessageShown(id)) {
+        deferred = message.show();
+      } else {
+        deferred = Q.defer().resolve();
+      }
+      
+      return deferred.promise;
+    };
+    
+    World.prototype.hideMessage = function(id) {
+      var deferred;
+      
+      console.log('id: ' + id + ', visible: ' + this.isMessageShown(id));
+      
+      if (this.isMessageShown(id)) {
+        console.log('hiding message ' + id);
+        message = this.messages[id];
+        deferred = message.show(false);
+      } else {
+        deferred = Q.defer();
+        deferred.resolve();
+      }
+      
+      return deferred.promise;
+    };
+    
+    World.prototype.isMessageShown = function(id) {
+      var message = this.messages[id];
+      
+      return typeof(message) !== 'undefined' && message.isVisible();    
+    };
+    
+    World.prototype.showLostGameMessage = function() {
+      return this.showMessage(this.GAME_LOST_MESSAGE, 'You lost!');
+    };
+    
+    World.prototype.showWonGameMessage = function() {
+      return this.showMessage(this.GAME_WON_MESSAGE, 'You won');
+    };
+    
+    World.prototype.showLoadNextLevelMessage = function(level) {
+      return this.showMessage(this.LOADING_NEXT_LEVEL_MESSAGE, 'Loading level ' + level);
+    };    
+    
+    World.prototype.hideLostGameMessage = function() {
+      return this.hideMessage(this.GAME_LOST_MESSAGE);
+    };
+    
+    World.prototype.hideWonGameMessage = function() {
+      console.log('hideWonGameMessage');
+      return this.hideMessage(this.GAME_WON_MESSAGE);
+    };
+   
+    World.prototype.hideLoadNextLevelMessage = function() {
+      var promise = this.hideMessage(this.LOADING_NEXT_LEVEL_MESSAGE);
+      
+      console.log('promise.isFulfilled (hideLoadNextLevelMessage): ' + promise.isFulfilled());
+      console.log('promise.isPending (hideLoadNextLevelMessage): ' + promise.isPending());
+      
+      return promise;
+    };
+    
+   
+    World.prototype.onGameWon = null;
+    World.prototype.onGameLost = null;
+    
     World.prototype.draw = function() {
-      if (!this.circles.length) {
-        if (!this.lostGameMessageShown) {
-          this.stopAnimation();
-          this.lostGameMessageShown = true;
-          this.addMessage('You lost!');
-        }
-      } else if (this.blocks.length == 1) {
-        if (!this.wonGameMessageShown) {
-          this.stopAnimation();
-          this.wonGameMessageShown = true;
-          this.addMessage('You won!');
+      if (this.gameStarted) {
+        if (!this.circles.length && this.onGameLost) {
+          this.onGameLost();
+        } else if (this.blocks.length == 1 && this.onGameWon) {
+          this.onGameWon();
         }
       }
-          
+            
       this.renderer.render(this.stage);
+    };
+    
+    World.prototype.initLevel = function(levelData) {
+      var index, blockData, block;
+      
+      this.levelInitialized = false;
+      
+      for (index in levelData) {
+        block = this.createBlock(index, levelData[index]);
+        this.addBlock(block);
+      }
+      
+      this.addBlock(this.slider);
+      
+      this.levelInitialized = true;
+    };
+    
+    World.prototype.createBlock = function(index, data) {
+      var x = this.getBlockXCoordinate(index),
+          y = this.getBlockYCoordinate(index),
+          blockTexture = this.getBlockTexture(data.color + '.png'),
+          block = this.createBlockFromTexture(blockTexture);
+          
+      block.position.x = x;
+      block.position.y = y;
+      
+      return block;
+    };
+    
+    World.prototype.getBlockXCoordinate = function(index) {
+      var mod = index % this.maxBlocksPerRow,
+          x = mod ? mod * (this.blockTextureWidth + this.blocksDistHorizontal) : mod;
+          
+      return x;
+    };
+    
+    World.prototype.getBlockYCoordinate = function(index) {
+      var mod = Math.floor(index / this.maxBlocksPerColumn),
+          y = index ? Math.floor(index / this.maxBlocksPerRow) * 
+            (this.blockTextureHeight + this.blocksDistVertical) : index;
+          
+      return y;
+    };
+    
+    World.prototype.addBlock = function(block) {
+      this.stage.addChild(block);
+      this.blocks.push(block);
+    };
+    
+    World.prototype.removeMessage = function(messageId) {
+      var message;
+      
+      message = this.messages[messageId];
+      if (message) {
+        delete this.messages[messageId];
+        this.stage.removeChild(message);    
+      }
+    };
+    
+    World.prototype.removeMessages = function() {
+      var id, message
+      
+      for (id in this.messages) {
+        if (Object.hasOwnProperty(id)) {
+          this.removeMessage(id);
+        }
+      }
+    };
+    
+    World.prototype.getDefaultWorldWidth = function() {
+      var width = (this.blockTextureWidth + this.blocksDistHorizontal) * 
+        (this.maxBlocksPerRow - 1) + this.blockTextureWidth;
+    
+      return width;
+    };
+    
+    World.prototype.getDefaultWorldHeight = function() {
+      var height = (this.blockTextureHeight + this.blocksDistVertical) * 
+        (this.maxBlocksPerColumn - 1) + this.blockTextureHeight;
+        
+      height = height > 600 ? height : 600;
+      
+      return height;
+    };
+    
+    function Message(text, config) {
+      var rgbRegex = /^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i,
+          config = config || {},
+          style = config.style || {
+            font: 'bold 40px Arial',
+            fill: 'blue'//'rgb(0, 255, 0)'
+          },
+          match;
+      
+      PIXI.Text.apply(this, [text, style]);
+      
+      match = this.style.fill.match(rgbRegex);
+      
+      if (!match) {
+        match = [ '0', '0', '0' ];
+      }
+      
+      this.r = match[1];
+      this.g = match[2];
+      this.b = match[3];
+      this.alpha = 0;
+      this.alphaIncrement = 0.05;
+      this.showMessage = false;
+      this.showDeferred = null;
     }
+    
+    Message.prototype = Object.create(PIXI.Text.prototype);
+    
+    Message.prototype.constructor = Message;
+    
+    Message.prototype.getColor = function() {
+      return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.alpha + ')';
+    };
+    
+    Message.prototype.updateTransform = function() {
+      if (this.showDeferred && this.showDeferred.promise.isPending()) {
+        if (this.showMessage) {
+          this.alpha += this.alphaIncrement;
+          if (this.alpha > 1) {
+            this.alpha = 1;
+            this.showDeferred.resolve(this);
+          }
+        } else {
+          this.alpha -= this.alphaIncrement;
+          if (this.alpha < 0) {
+            this.alpha = 0;
+            var promise = this.showDeferred.promise;
+            
+            console.log('promise.isFulfilled (updateTransform): ' + promise.isFulfilled());
+            console.log('promise.isPending (updateTransform): ' + promise.isPending());
+            
+            this.showDeferred.resolve(this);
+          }
+        }
+      }
+    
+      PIXI.Text.prototype.updateTransform.call(this);
+    };
+    
+    Message.prototype.show = function(show) {
+      this.showMessage = typeof(show) == 'undefined' || show;
+      this.showDeferred = this.showMessage && this.isHidden() || 
+        !this.showMessage && this.isVisible() ? 
+         Q.defer() : Q.defer().resolve();
+      
+      return this.showDeferred;
+    };
+    
+    Message.prototype.isVisible = function() {
+      console.log('alpha: ' + this.alpha);
+      return this.alpha == 1;
+    };
+    
+    Message.prototype.isHidden = function() {
+      return this.alpha == 0;
+    };
+    
+    function GameService(world, options) {
+      var options = options || {};
+      
+      this.currentLevel = 0;
+      this.levelDataUrl = options.levelDataUrl || 'http://localhost:4000/levels/';
+      this.world = world;
+      
+      world.onGameLost = this.endGame.bind(this);
+      world.onGameWon = this.endLevel.bind(this);
+    }
+    
+    GameService.prototype.drawWorld = function() {
+      this.world.draw();
+    };
+    
+    GameService.prototype.endGame = function() {
+      this.world.gameStarted = false;
+      this.world.stopAnimation(true);
+      this.world.showLostGameMessage();
+    };
+    
+    GameService.prototype.endLevel = function() {
+      var that = this;
+      
+      this.world.gameStarted = false;
+      this.world.stopAnimation(true);
+      this.world.showWonGameMessage()
+        .then(function() {
+          
+          that.world.removeCircles();
+          that.world.removeBlocks();
+          that.world.removeGifts();
+          
+         return that.world.hideWonGameMessage();
+        })
+        .then(function () {
+          return that.world.showLoadNextLevelMessage(that.currentLevel + 1);
+        })
+        .then(function() {
+          return that.loadNextLevel();
+        })
+        .then(function(data) {
+          that.currentLevel++;
+          that.world.initLevel(data);
+        })
+        .then(function() {
+          return that.world.hideLoadNextLevelMessage();
+        })
+        .then(function() {
+          that.startGame(true);
+        })
+        .done(function() {
+          console.log('Next level loaded');
+        })
+        .fail(function() {
+          alert('Kaboom !');
+        });
+    };
+    
+    GameService.prototype.loadNextLevel = function() {
+      var that = this;
+      
+      return Q($.ajax({
+        dataType: 'json',
+        url: this.levelDataUrl + (this.currentLevel + 1) + '.json',
+        type: 'GET'
+      }));
+    };
+    
+    GameService.prototype.startGame = function(start) {
+      console.log('starting game ...');
+      this.world.addCircles(1, 225, 20);
+      this.world.stopAnimation(!start);
+      this.world.gameStarted = start;      
+    };
     
     return {
       DynamicBody: DynamicBody,
@@ -748,7 +1112,8 @@ define(['pixi'], function(PIXI) {
       Balls3Gift: Balls3Gift,
       HandGift: HandGift,
       Slider: Slider,
-      World: World
+      World: World,
+      GameService: GameService
     };
   };
 });
