@@ -1032,7 +1032,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     function GameService(world, options) {
       var options = options || {};
       
-      this.currentLevel = 0;
+      this.currentLevel = 1;
       this.levelDataUrl = options.levelDataUrl || 'http://localhost:4000/levels/';
       this.world = world;
       
