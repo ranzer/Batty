@@ -592,6 +592,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     World.prototype.GAME_WON_MESSAGE = '0';
     World.prototype.GAME_LOST_MESSAGE = '1';
     World.prototype.LOADING_NEXT_LEVEL_MESSAGE = '2';
+    World.prototype.LEVEL_COMPLETED_MESSAGE = '3';
     World.prototype.removeBlock = function(block) {
       this.removeBody(block, this.blocks);
     };
@@ -831,6 +832,10 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       return this.showMessage(this.GAME_WON_MESSAGE, 'You won');
     };
     
+    World.prototype.showLevelCompletedMessage = function(level) {
+      return this.showMessage(this.LEVEL_COMPLETED_MESSAGE, 'Level ' + level + ' completed');
+    };
+    
     World.prototype.showLoadNextLevelMessage = function(level) {
       return this.showMessage(this.LOADING_NEXT_LEVEL_MESSAGE, 'Loading level ' + level);
     };    
@@ -844,6 +849,10 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       return this.hideMessage(this.GAME_WON_MESSAGE);
     };
    
+    World.prototype.hideLevelCompletedMessage = function() {
+      return this.hideMessage(this.LEVEL_COMPLETED_MESSAGE);
+    };
+    
     World.prototype.hideLoadNextLevelMessage = function() {
       var promise = this.hideMessage(this.LOADING_NEXT_LEVEL_MESSAGE);
       
@@ -1033,6 +1042,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       var options = options || {};
       
       this.currentLevel = 1;
+      this.maxLevels = options.maxLevels || 2;
       this.levelDataUrl = options.levelDataUrl || 'http://localhost:4000/levels/';
       this.world = world;
       
@@ -1055,37 +1065,47 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       
       this.world.gameStarted = false;
       this.world.stopAnimation(true);
-      this.world.showWonGameMessage()
-        .then(function() {
-          
-          that.world.removeCircles();
-          that.world.removeBlocks();
-          that.world.removeGifts();
-          
-         return that.world.hideWonGameMessage();
-        })
-        .then(function () {
-          return that.world.showLoadNextLevelMessage(that.currentLevel + 1);
-        })
-        .then(function() {
-          return that.loadNextLevel();
-        })
-        .then(function(data) {
-          that.currentLevel++;
-          that.world.initLevel(data);
-        })
-        .then(function() {
-          return that.world.hideLoadNextLevelMessage();
-        })
-        .then(function() {
-          that.startGame(true);
-        })
-        .done(function() {
-          console.log('Next level loaded');
-        })
-        .fail(function() {
-          alert('Kaboom !');
-        });
+      
+      if (this.currentLevel == this.maxLevels) {
+        that.world.showWonGameMessage();
+      } else {
+        this.world.showLevelCompletedMessage(that.currentLevel)
+          .then(function() {
+            that.world.removeCircles();
+            that.world.removeBlocks();
+            that.world.removeGifts();
+            
+            return that.world.hideLevelCompletedMessage();
+          })
+          .then(function () {
+            return that.world.showLoadNextLevelMessage(that.currentLevel + 1);
+          })
+          .then(function() {
+            return that.loadNextLevel()
+              .then(function(data) {
+                return data;
+              }, function(jqXHR, textStatus, errorThrown) {
+                console.log('Error loading next level');
+                throw new Error('Level not found');
+              });
+          })
+          .then(function(data) {
+            that.currentLevel++;
+            that.world.initLevel(data);
+          })
+          .then(function() {
+            return that.world.hideLoadNextLevelMessage();
+          })
+          .then(function() {
+            that.startGame(true);
+          })
+          .fail(function(err) {
+            alert('Kaboom !');
+          })
+          .done(function() {
+            console.log('end level completed');
+          });
+      }
     };
     
     GameService.prototype.loadNextLevel = function() {
@@ -1100,7 +1120,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     
     GameService.prototype.startGame = function(start) {
       console.log('starting game ...');
-      this.world.addCircles(1, 225, 20);
+      this.world.addCircles(1, 225, 15);
       this.world.stopAnimation(!start);
       this.world.gameStarted = start;      
     };
