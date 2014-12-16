@@ -7,9 +7,11 @@
 			require.config({
 			  baseUrl: '/js',
 				paths: {
-				  'pixi': 'lib/pixi.dev',
+				  'jquery': 'lib/jquery-2.1.1',
+          'pixi': 'lib/pixi.dev',
 					'modernizr': 'lib/modernizr',
-					'batty': 'src/batty'
+					'batty': 'src/batty',
+          'q': 'lib/q'
 				},
 				shim: {
 				  'modernizr': {
@@ -17,9 +19,8 @@
 					}
 				}
 			});
-		  require(['pixi', 'batty', 'modernizr'], function(PIXI, Batty, Modernizr) {
-				var Batty = Batty(window),
-						world;
+		  require(['pixi', 'batty', 'modernizr', 'q'], function(PIXI, Batty, Modernizr, Q) {
+				var Batty = Batty(window);
 				
 				var assets = ['SpriteSheet.json'],
 						assetLoader;
@@ -33,19 +34,32 @@
 				assetLoader = new PIXI.AssetLoader(assets);
 				
 				assetLoader.onComplete = function() {
-					world = new Batty.World({ width: 800, height: 600 });
-				
-					gameLoop(world);
+					var world = new Batty.World({ height: 600 }),
+              gameService = new Batty.GameService(world);
+              
+          gameService
+            .loadNextLevel()
+            .then(function(data) {
+              return world.initLevel(data);
+            })
+            .then(function() {
+              return gameService.startGame(true);
+            })
+            .fail(function(ex) {
+              alert(ex);
+            });
+              
+					gameLoop(gameService);
 				};
 				
 				assetLoader.load();
 				
-				function gameLoop(world) {
+				function gameLoop(gameService) {
 					requestAnimFrame(function() {
-						gameLoop(world);
+            gameLoop(gameService);
 					});
 						
-					world.draw();
+					gameService.drawWorld();
 				}
 			});
 		</script>
