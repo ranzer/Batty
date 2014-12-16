@@ -1,0 +1,87 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'C:\\Program Files (x86)\\nodejs\\\\node.exe',
+1 verbose cli   'C:\\Program Files (x86)\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'install',
+1 verbose cli   'junit',
+1 verbose cli   '--save-dev' ]
+2 info using npm@1.4.28
+3 info using node@v0.10.32
+4 verbose node symlink C:\Program Files (x86)\nodejs\\node.exe
+5 verbose cache add [ 'junit', null ]
+6 verbose cache add name=undefined spec="junit" args=["junit",null]
+7 verbose parsed url { protocol: null,
+7 verbose parsed url   slashes: null,
+7 verbose parsed url   auth: null,
+7 verbose parsed url   host: null,
+7 verbose parsed url   port: null,
+7 verbose parsed url   hostname: null,
+7 verbose parsed url   hash: null,
+7 verbose parsed url   search: null,
+7 verbose parsed url   query: null,
+7 verbose parsed url   pathname: 'junit',
+7 verbose parsed url   path: 'junit',
+7 verbose parsed url   href: 'junit' }
+8 silly lockFile fdda4a4a-junit junit
+9 verbose lock junit C:\Users\zoranra\AppData\Roaming\npm-cache\fdda4a4a-junit.lock
+10 silly lockFile fdda4a4a-junit junit
+11 silly lockFile fdda4a4a-junit junit
+12 verbose addNamed [ 'junit', '' ]
+13 verbose addNamed [ null, '*' ]
+14 silly lockFile 2a2f3286-junit junit@
+15 verbose lock junit@ C:\Users\zoranra\AppData\Roaming\npm-cache\2a2f3286-junit.lock
+16 silly addNameRange { name: 'junit', range: '*', hasData: false }
+17 verbose request where is /junit
+18 verbose request registry https://registry.npmjs.org/
+19 verbose request id b945af8ba186e563
+20 verbose url raw /junit
+21 verbose url resolving [ 'https://registry.npmjs.org/', './junit' ]
+22 verbose url resolved https://registry.npmjs.org/junit
+23 verbose request where is https://registry.npmjs.org/junit
+24 info trying registry request attempt 1 at 15:15:01
+25 http GET https://registry.npmjs.org/junit
+26 http 404 https://registry.npmjs.org/junit
+27 verbose headers { date: 'Thu, 02 Oct 2014 13:15:01 GMT',
+27 verbose headers   server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+27 verbose headers   'content-type': 'application/json',
+27 verbose headers   'cache-control': 'max-age=0',
+27 verbose headers   'content-length': '52',
+27 verbose headers   'accept-ranges': 'bytes',
+27 verbose headers   via: '1.1 varnish',
+27 verbose headers   age: '0',
+27 verbose headers   'x-served-by': 'cache-fra1231-FRA',
+27 verbose headers   'x-cache': 'MISS',
+27 verbose headers   'x-cache-hits': '0',
+27 verbose headers   'x-timer': 'S1412255701.761816,VS0,VE180',
+27 verbose headers   'keep-alive': 'timeout=10, max=50',
+27 verbose headers   connection: 'Keep-Alive' }
+28 silly registry.get cb [ 404,
+28 silly registry.get   { date: 'Thu, 02 Oct 2014 13:15:01 GMT',
+28 silly registry.get     server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+28 silly registry.get     'content-type': 'application/json',
+28 silly registry.get     'cache-control': 'max-age=0',
+28 silly registry.get     'content-length': '52',
+28 silly registry.get     'accept-ranges': 'bytes',
+28 silly registry.get     via: '1.1 varnish',
+28 silly registry.get     age: '0',
+28 silly registry.get     'x-served-by': 'cache-fra1231-FRA',
+28 silly registry.get     'x-cache': 'MISS',
+28 silly registry.get     'x-cache-hits': '0',
+28 silly registry.get     'x-timer': 'S1412255701.761816,VS0,VE180',
+28 silly registry.get     'keep-alive': 'timeout=10, max=50',
+28 silly registry.get     connection: 'Keep-Alive' } ]
+29 silly lockFile 2a2f3286-junit junit@
+30 silly lockFile 2a2f3286-junit junit@
+31 error 404 404 Not Found: junit
+31 error 404
+31 error 404 'junit' is not in the npm registry.
+31 error 404 You should bug the author to publish it
+31 error 404
+31 error 404 Note that you can also install from a
+31 error 404 tarball, folder, or http url, or git url.
+32 error System Windows_NT 6.1.7601
+33 error command "C:\\Program Files (x86)\\nodejs\\\\node.exe" "C:\\Program Files (x86)\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "install" "junit" "--save-dev"
+34 error cwd J:\Ostalo\Examples\HTML5\Batty\tests
+35 error node -v v0.10.32
+36 error npm -v 1.4.28
+37 error code E404
+38 verbose exit [ 1, true ]
