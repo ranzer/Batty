@@ -1,5 +1,4 @@
 {"frames": {
-
 "blue.png":
 {
 	"frame": {"x":0,"y":0,"w":50,"h":25},
@@ -151,6 +150,46 @@
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":60,"h":65},
 	"sourceSize": {"w":60,"h":65}
+},
+"gun0.png":
+{
+  "frame": {"x":0,"y":155,"w":115,"h":60},
+  "rotated": false,
+  "trimmed": false,
+  "spriteSourceSize": {"x":0,"y":0,"w":115,"h":60},
+  "sourceSize": {"w":115,"h":60}
+},
+"gun1.png":
+{
+  "frame": {"x":115,"y":155,"w":119,"h":60},
+  "rotated": false,
+  "trimmed": false,
+  "spriteSourceSize": {"x":0,"y":0,"w":119,"h":60},
+  "sourceSize": {"w":119,"h":60}
+},
+"gun2.png":
+{
+  "frame": {"x":235,"y":155,"w":120,"h":60},
+  "rotated": false,
+  "trimmed": false,
+  "spriteSourceSize": {"x":0,"y":0,"w":120,"h":60},
+  "sourceSize": {"w":120,"h":60}
+},
+"gun3.png":
+{
+  "frame": {"x":355,"y":155,"w":120,"h":60},
+  "rotated": false,
+  "trimmed": false,
+  "spriteSourceSize": {"x":0,"y":0,"w":120,"h":60},
+  "sourceSize": {"w":120,"h":60}
+},
+"bullet.png":
+{
+  "frame": {"x":0,"y":0,"w":5,"h":10},
+  "rotated": false,
+  "trimmed": false,
+  "spriteSourceSize": {"x":0,"y":0,"w":5,"h":10},
+  "sourceSize": {"w":5,"h":10}
 }},
 "meta": {
 	"app": "http://www.texturepacker.com",
