@@ -293,7 +293,6 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       
       DynamicBody.apply(this, [textures[0], world, options]);
       
-      this.action = options.action;
       this.textures = textures;
       this.animationSpeed = options.animationSpeed || 1;
       this.loop = typeof(options.loop) != 'undefined' ? options.loop : true;
@@ -342,10 +341,13 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       if (block.type === 'slider') {
         this.world.removeGift(this);
         if (this.action) {
-          this.action(this.world.slider).init();
+          this.action();
         }
       }
     };
+    
+    Gift.prototype.action = null;
+    Gift.prototype.destroy = null;
     
     function Balls3Gift(world, options) {
       var balls3GiftTexturesLength = 6,
@@ -355,28 +357,6 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       for (i = 0; i < balls3GiftTexturesLength; i++) {
         balls3GiftTextures.push(PIXI.TextureCache['3balls' + i + '.png']);
       }
-
-      options.action = function(slider) {
-        var world = this.world;
-            i = this.ballsCount;
-        
-        return {
-          init: function() {
-            // We need to place circle at the point where it doesn't collide with
-            // the slider object (it would cause problems with the hand gift).
-            while (i--) {
-              circle = world.createCircle({
-                x: slider.x,
-                y: slider.y - world.circleTexture.height - 1,
-                angle: Math.floor(Math.random() * 90),
-                vel: 10
-              });
-              
-              world.addCircle(circle);
-            }
-          }
-        };
-      };
       
       Gift.apply(this, [balls3GiftTextures, world, options]);
       
@@ -385,6 +365,24 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     
     Balls3Gift.prototype = Object.create(Gift.prototype);
     Balls3Gift.prototype.constructor = Balls3Gift;
+    
+    Balls3Gift.prototype.action = function() {
+      var world = this.world;
+          i = this.ballsCount,
+          slider = world.slider,
+          circle;
+        
+      while (i--) {
+        circle = world.createCircle({
+          x: slider.x,
+          y: slider.y - world.circleTexture.height - 1,
+          angle: Math.floor(Math.random() * 90),
+          vel: 10
+        });
+        
+        world.addCircle(circle);
+      }
+    };
     
     function HandGift(world, options) {
       var handGiftTexturesLength = 7,
@@ -395,90 +393,6 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
         handGiftTextures.push(PIXI.TextureCache['hand' + i + '.png']);
       }
 
-      options.action = function(slider) {
-        var that = this,
-            releaseCircle = function() {
-              if (that.catchedCircle !== null) {
-                that.catchedCircle.angle = that.previousAngle;
-                that.catchedCircle.position.y = slider.position.y - that.catchedCircle.height - 20;
-                that.catchedCircle.vel = that.previousVel;
-                that.catchedCircle.onUpdateTransformed = that.previousOnUpdateTransformed;
-                that.catchedCircle = null;
-              }
-            };
-        that.catchedCircle = null;
-        that.previousGetCollidableBodies = null;
-        that.sliderKeyDownAction = function(e) {
-          if (e.keyCode == 37 || e.keyCode == 39) {
-            if (that.catchedCircle) {
-              that.catchedCircle.vel = slider.vel;
-            }
-          } else if (e.keyCode == 32 && that.catchedCircle) {
-            releaseCircle();
-          }
-        };
-        that.sliderKeyUpAction = function(e) {
-          if (that.catchedCircle) {
-            that.catchedCircle.vel = 0;
-          }
-        };
-        
-        return {
-          init: function() {
-            that.previousGetCollidableBodies = slider.getCollidableBodies;
-            that.previousOnBlockCollided = slider.onBlockCollided;
-            slider.getCollidableBodies = function() {
-              var bodies = slider.world.circles.filter(function(circle) {
-                return circle !== that.catchedCircle;
-              });
-              
-              return bodies;
-            };
-            slider.addAction(Slider.KEY_DOWN, that.sliderKeyDownAction);
-            slider.addAction(Slider.KEY_UP, that.sliderKeyUpAction);
-            slider.onBlockCollided = function(block) {
-              if (that.catchedCircle !== block && Slider.prototype.onBlockCollided) {
-                Slider.prototype.onBlockCollided.call(slider);
-              }
-              if (block !== that.catchedCircle && block.type === 'circle') {
-                releaseCircle();
-
-                // Beacuse block's angle is value calculated after the collision with the slider
-                // we need to retrieve block's angle before the collision.
-                that.previousAngle = 180 - block.angle;
-                that.previousVel = block.vel;
-                that.catchedCircle = block;
-                that.catchedCircle.minX = block.position.x - slider.position.x;
-                that.catchedCircle.maxX = that.world.width - (slider.width - that.catchedCircle.minX);
-                that.previousOnUpdateTransformed = block.onUpdateTransformed;
-                
-                block.onUpdateTransformed = function() {
-                  if (this.position.x < that.catchedCircle.minX) {
-                    this.position.x = that.catchedCircle.minX;
-                  }	else if (this.position.x > that.catchedCircle.maxX) {
-                    this.position.x = that.catchedCircle.maxX;
-                  }
-                };
-                
-                block.angle = 0;
-                block.vel = 0;								
-                block.position.y = slider.position.y - block.height - 1;
-              }
-            };	
-            
-            setTimeout(this.destroy, 5000);
-          },
-          destroy: function() {
-            slider.getCollidableBodies = that.previousGetCollidableBodies;
-            slider.onBlockCollided = that.previousOnBlockCollided;
-            slider.removeAction(Slider.KEY_DOWN, that.sliderKeyDownAction);
-            slider.removeAction(Slider.KEY_UP, that.sliderKeyUpAction);
-            
-            releaseCircle();
-          }
-        };
-      };
-      
       Gift.apply(this, [handGiftTextures, world, options]);
       
       this.catchedCircle = null;
@@ -486,10 +400,98 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       this.previousAngle = -1;
       this.previousUpdateTransform = null;
       this.previousGetCollidableBodies = null;
+      this.sliderKeyDownActionRef = this.sliderKeyDownAction.bind(this);
+      this.sliderKeyUpActionRef = this.sliderKeyUpAction.bind(this);
     }
     
     HandGift.prototype = Object.create(Gift.prototype);
     HandGift.prototype.constructor = HandGift;
+    
+    HandGift.prototype.releaseCircle = function() {
+      if (this.catchedCircle !== null) {
+        this.catchedCircle.angle = this.previousAngle;
+        this.catchedCircle.position.y = this.world.slider.position.y - this.catchedCircle.height - 20;
+        this.catchedCircle.vel = this.previousVel;
+        this.catchedCircle.onUpdateTransformed = this.previousOnUpdateTransformed;
+        this.catchedCircle = null;
+      }
+    };
+    
+    HandGift.prototype.sliderKeyDownAction = function(e) {
+      if (e.keyCode == 37 || e.keyCode == 39) {
+        if (this.catchedCircle) {
+          this.catchedCircle.vel = this.world.slider.vel;
+        }
+      } else if (e.keyCode == 32 && this.catchedCircle) {
+        this.releaseCircle();
+      }
+    };
+    
+    HandGift.prototype.sliderKeyUpAction = function(e) {
+      if (this.catchedCircle) {
+        this.catchedCircle.vel = 0;
+      }
+    };
+    
+    HandGift.prototype.action = function() {
+      var that = this,
+          slider = this.world.slider;
+          
+      this.catchedCircle = null;
+      this.previousGetCollidableBodies = null;
+      this.previousGetCollidableBodies = slider.getCollidableBodies;
+      this.previousOnBlockCollided = slider.onBlockCollided;
+      slider.getCollidableBodies = function() {
+        var bodies = slider.world.circles.filter(function(circle) {
+          return circle !== that.catchedCircle;
+        });
+        
+        return bodies;
+      };
+      slider.addAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
+      slider.addAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
+      slider.onBlockCollided = function(block) {
+        if (that.catchedCircle !== block && Slider.prototype.onBlockCollided) {
+          Slider.prototype.onBlockCollided.call(slider);
+        }
+        if (block !== that.catchedCircle && block.type === 'circle') {
+          that.releaseCircle();
+
+          // Beacuse block's angle is value calculated after the collision with the slider
+          // we need to retrieve block's angle before the collision.
+          that.previousAngle = 180 - block.angle;
+          that.previousVel = block.vel;
+          that.catchedCircle = block;
+          that.catchedCircle.minX = block.position.x - slider.position.x;
+          that.catchedCircle.maxX = that.world.width - (slider.width - that.catchedCircle.minX);
+          that.previousOnUpdateTransformed = block.onUpdateTransformed;
+          
+          block.onUpdateTransformed = function() {
+            if (this.position.x < that.catchedCircle.minX) {
+              this.position.x = that.catchedCircle.minX;
+            }	else if (this.position.x > that.catchedCircle.maxX) {
+              this.position.x = that.catchedCircle.maxX;
+            }
+          };
+          
+          block.angle = 0;
+          block.vel = 0;								
+          block.position.y = slider.position.y - block.height - 1;
+        }
+      };	
+          
+      setTimeout(this.destroy.bind(this), 5000);
+    };
+    
+    HandGift.prototype.destroy = function() {
+      var slider = this.world.slider;
+      
+      slider.getCollidableBodies = this.previousGetCollidableBodies;
+      slider.onBlockCollided = this.previousOnBlockCollided;
+      slider.removeAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
+      slider.removeAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
+      this.releaseCircle();
+    };
     
     function GunGift(world, options) {
       var gunGiftTexturesLength = 4,
@@ -499,70 +501,79 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
         gunGiftTextures.push(PIXI.TextureCache['gun' + i + '.png']);
       }
       
-      options.action = function(slider) {
-        var that = this,
-            world = slider.world,
-            keyDownFired = false,
-            fps = 2,
-            delay = 1000 / fps,
-            lastTimeKeyDownFired = Date.now();
-         
-        that.sliderKeyDownAction = function(e) {
-          var currentTime = Date.now(), 
-              lastTimeActionCalled = 0,
-              action, requestId;
-          if (currentTime - lastTimeKeyDownFired > delay) {
-            lastTimeKeyDownFired = currentTime;
-            if (!keyDownFired) {
-              keyDownFired = true;
-              action = function(time) {
-                var delta = time - lastTimeActionCalled;
-                requestId = requestAnimationFrame(action);
-                if (delta > delay) {
-                  lastTimeActionCalled = time;
-                  if (keyDownFired && slider.keysMap[32]) {
-                    console.log('Firing');
-                    bullet = world.createBullet({ 
-                      angle: -90, 
-                      vel: 10, 
-                      x: slider.x + slider.width / 2, 
-                      y: slider.y - slider.height
-                    });
-                    world.addBullet(bullet);
-                  } else {
-                    cancelAnimationFrame(requestId);
-                  }
-                }
-              };
-              
-              requestId = requestAnimationFrame(action);
-            }
-          }  
-        };
-        that.sliderKeyUpAction = function(e) {
-          keyDownFired = !!slider.keysMap[32];
-        };
-        return {
-          init: function() {
-            slider.addAction(Slider.KEY_DOWN, that.sliderKeyDownAction);
-            slider.addAction(Slider.KEY_UP, that.sliderKeyUpAction);
-            
-            setTimeout(this.destroy, 5000);
-          },
-          destroy: function() {
-            slider.removeAction(Slider.KEY_DOWN, that.sliderKeyDownAction);
-            slider.removeAction(Slider.KEY_UP, that.sliderKeyUpAction);
-            
-            keyDownFired = false;
-          }
-        };
-      };
-      
       Gift.apply(this, [gunGiftTextures, world, options]);
+    
+      this.lastTimeKeyDownFired = 0;
+      this.lastTimeActionCalled = 0;
+      this.keyDownFired = false;
+      this.requestId = -1;
+      this.fps = 5,
+      this.delay = 1000 / this.fps;
+      this.sliderKeyDownActionRef = this.sliderKeyDownAction.bind(this);
+      this.sliderKeyUpActionRef = this.sliderKeyUpAction.bind(this);
     }
     
     GunGift.prototype = Object.create(Gift.prototype);
     GunGift.prototype.constructor = GunGift;
+    
+    GunGift.prototype.sliderKeyDownAction = function(e) {
+      var currentTime = Date.now();
+          
+      if (currentTime - this.lastTimeKeyDownFired > this.delay) {
+        this.lastTimeKeyDownFired = currentTime;
+        if (!this.keyDownFired) {
+          this.keyDownFired = true;
+          this.requestId = requestAnimationFrame(this.fireBullet.bind(this));
+        }
+      }  
+    };
+    
+    GunGift.prototype.sliderKeyUpAction = function(e) {
+      this.keyDownFired = !!this.world.slider.keysMap[32];
+    };
+    
+    GunGift.prototype.fireBullet = function(time) {
+      var delta = time - this.lastTimeActionCalled,
+          slider;
+      
+      requestId = requestAnimationFrame(this.fireBullet.bind(this));
+      if (delta > this.delay) {
+        this.lastTimeActionCalled = time;
+        slider = this.world.slider;
+        if (this.keyDownFired && slider.keysMap[32]) {
+          console.log('Firing');
+          bullet = this.world.createBullet({ 
+            angle: -90, 
+            vel: 10, 
+            x: slider.x + slider.width / 2, 
+            y: slider.y - slider.height
+          });
+          this.world.addBullet(bullet);
+        } else {
+          cancelAnimationFrame(requestId);
+        }
+      }
+    };
+    
+    GunGift.prototype.action = function() {
+      var that = this,
+          world = this.world,
+          slider = world.slider;
+          
+      slider.addAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
+      slider.addAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
+            
+      setTimeout(this.destroy.bind(this), 5000);
+    };
+    
+    GunGift.prototype.destroy = function() {
+      var slider = this.world.slider;
+      
+      slider.removeAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
+      slider.removeAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
+            
+      this.keyDownFired = false;
+    };
     
     function Slider(texture, world, options) {
       var options = options || {};
