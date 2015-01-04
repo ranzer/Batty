@@ -550,8 +550,10 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       
       Gift.apply(this, [gunGiftTextures, world, options]);
     
+      this.actionExpireTime = 5000;
       this.lastTimeKeyDownFired = 0;
       this.lastTimeActionCalled = 0;
+      this.lastTimeBulletFired = 0;
       this.keyDownFired = false;
       this.requestId = -1;
       this.fps = 5,
