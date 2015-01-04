@@ -421,6 +421,8 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
 
       Gift.apply(this, [handGiftTextures, world, options]);
       
+      this.lastTimeActionCalled = 0;
+      this.actionExpireTime = 5000;
       this.catchedCircle = null;
       this.previousVel = -1;
       this.previousAngle = -1;
