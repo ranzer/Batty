@@ -340,9 +340,27 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     };
     
     Gift.prototype.onBlockCollided = function(block) {
+      var that = this,
+          existingGift;
       if (block.type === 'slider') {
-        this.world.removeGift(this);
+        this.visible = false;
+        if (this.actionExpireTime) {
+          //console.log('gifts count: ' + this.world.gifts.length);
+          existingGift = this.world.gifts.filter(function(gift) {
+            //console.log('comparing gift of type ' + gift.constructor.name +
+            //  ' and ' + that.constructor.name);
+            //console.log('this.constructor: ' + that.constructor.name);
+            return gift.isActive && gift.constructor.name == that.constructor.name;
+          });
+          //console.log('existingGift.length: ' + existingGift.length);
+          if (existingGift.length) {
+            //console.log('add expire time to gift of type ' + existingGift[0].constructor.name);
+            existingGift[0].actionExpireTime += this.actionExpireTime;
+            return;
+          }
+        }
         if (this.action) {
+          this.isActive = true;
           this.action();
         }
       }
