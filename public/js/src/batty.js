@@ -467,7 +467,8 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     HandGift.prototype.action = function() {
       var that = this,
           slider = this.world.slider;
-          
+
+      this.lastTimeActionCalled = +new Date();
       this.catchedCircle = null;
       this.previousGetCollidableBodies = null;
       this.previousGetCollidableBodies = slider.getCollidableBodies;
@@ -485,9 +486,8 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
         if (that.catchedCircle !== block && Slider.prototype.onBlockCollided) {
           Slider.prototype.onBlockCollided.call(slider);
         }
-        if (block !== that.catchedCircle && block.type === 'circle') {
+        if (!that.isDestroying && block !== that.catchedCircle && block.type === 'circle') {
           that.releaseCircle();
-
           // Beacuse block's angle is value calculated after the collision with the slider
           // we need to retrieve block's angle before the collision.
           that.previousAngle = 180 - block.angle;
@@ -500,18 +500,18 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
           block.onUpdateTransformed = function() {
             if (this.position.x < that.catchedCircle.minX) {
               this.position.x = that.catchedCircle.minX;
-            }	else if (this.position.x > that.catchedCircle.maxX) {
+            }  else if (this.position.x > that.catchedCircle.maxX) {
               this.position.x = that.catchedCircle.maxX;
             }
           };
           
           block.angle = 0;
-          block.vel = 0;								
+          block.vel = 0;
           block.position.y = slider.position.y - block.height - 1;
         }
-      };	
+      };
           
-      setTimeout(this.destroy.bind(this), 5000);
+      setTimeout(this.destroy.bind(this), this.actionExpireTime);
     };
     
     HandGift.prototype.destroy = function() {
