@@ -366,6 +366,10 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       }
     };
     
+    Gift.prototype.onOutOfScreen = function(gift) {
+      this.world.removeGift(gift);
+    };
+
     Gift.prototype.action = null;
     Gift.prototype.destroy = null;
     
