@@ -515,13 +515,29 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     };
     
     HandGift.prototype.destroy = function() {
-      var slider = this.world.slider;
-      
-      slider.getCollidableBodies = this.previousGetCollidableBodies;
-      slider.onBlockCollided = this.previousOnBlockCollided;
-      slider.removeAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
-      slider.removeAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
-      this.releaseCircle();
+      var slider = this.world.slider,
+          currentTime = +new Date(),
+          delta = currentTime - this.lastTimeActionCalled;
+
+      if (currentTime - this.lastTimeActionCalled > this.actionExpireTime) {
+        this.isDestroying = true;
+        console.log('destroying ...');
+        console.log('isDestroying (destroy): ' + this.isDestroying);
+        // Check if previousGetCollidableBodies instance property is set
+        // before reversing changes made by the gift's action method.
+        // If previousGetCollidableBodies instance property is null it
+        // means that the slider missed the gift.
+        if (this.previousGetCollidableBodies) {
+          this.releaseCircle();
+          slider.getCollidableBodies = this.previousGetCollidableBodies;
+          slider.onBlockCollided = this.previousOnBlockCollided;
+          slider.removeAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
+          slider.removeAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
+        }
+        this.isActive = false;
+      } else {
+        setTimeout(this.destroy.bind(this), this.actionExpireTime - delta);
+      }
     };
     
     function GunGift(world, options) {
