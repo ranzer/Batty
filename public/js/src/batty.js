@@ -406,6 +406,8 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
         
         world.addCircle(circle);
       }
+
+      this.isActive = false;
     };
     
     function HandGift(world, options) {
