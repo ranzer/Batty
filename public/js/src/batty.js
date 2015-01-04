@@ -293,6 +293,8 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       
       DynamicBody.apply(this, [textures[0], world, options]);
       
+      this.isActive = false;
+      this.isDestroying = false;
       this.textures = textures;
       this.animationSpeed = options.animationSpeed || 1;
       this.loop = typeof(options.loop) != 'undefined' ? options.loop : true;
