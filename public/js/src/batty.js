@@ -582,12 +582,13 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     };
     
     GunGift.prototype.fireBullet = function(time) {
-      var delta = time - this.lastTimeActionCalled,
+      var currentTime = +new Date(),
+          delta = currentTime - this.lastTimeBulletFired,
           slider;
       
       requestId = requestAnimationFrame(this.fireBullet.bind(this));
       if (delta > this.delay) {
-        this.lastTimeActionCalled = time;
+        this.lastTimeBulletFired = currentTime;
         slider = this.world.slider;
         if (this.keyDownFired && slider.keysMap[32]) {
           console.log('Firing');
