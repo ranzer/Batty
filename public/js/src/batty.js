@@ -448,15 +448,18 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     HandGift.prototype.sliderKeyDownAction = function(e) {
       if (e.keyCode == 37 || e.keyCode == 39) {
         if (this.catchedCircle) {
+          console.log('changing cathedCircle.vel to ' + this.world.slider.vel);
           this.catchedCircle.vel = this.world.slider.vel;
         }
       } else if (e.keyCode == 32 && this.catchedCircle) {
+        console.log('releasing cathedCircle (HandGift)');
         this.releaseCircle();
       }
     };
     
     HandGift.prototype.sliderKeyUpAction = function(e) {
       if (this.catchedCircle) {
+        console.log('changing catchedCircle.vel to 0');
         this.catchedCircle.vel = 0;
       }
     };
