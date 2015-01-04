@@ -104,7 +104,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     DynamicBody.prototype.updateAngleReflectionVertically = function() {
       this.angle = 180 - this.angle;
     };
-		
+
     DynamicBody.prototype.blocksCollide = function() {
       var blocks = this.getCollidableBodies(),
           blocksLength = blocks.length,
@@ -200,9 +200,9 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
           x22 = block.position.x + block.width,
           y22 = block.position.y + block.height;
       
-			width = this.getMaxIntersection(x11, x12, x21, x22);
+      width = this.getMaxIntersection(x11, x12, x21, x22);
       height = this.getMaxIntersection(y11, y12, y21, y22);
-			
+
       return { width: width, height: height };
     };
     
