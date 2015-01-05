@@ -619,12 +619,18 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     };
     
     GunGift.prototype.destroy = function() {
-      var slider = this.world.slider;
-      
-      slider.removeAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
-      slider.removeAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
-            
-      this.keyDownFired = false;
+      var slider = this.world.slider,
+          currentTime = +new Date(),
+          delta = currentTime - this.lastTimeActionCalled;
+
+      if (delta > this.actionExpireTime) {
+        slider.removeAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
+        slider.removeAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
+        this.keyDownFired = false;
+        this.isActive = false;
+      } else {
+        setTimeout(this.destroy.bind(this), this.actionExpireTime - delta);
+      }
     };
     
     function Slider(texture, world, options) {
