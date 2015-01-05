@@ -935,12 +935,17 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     }
     
     World.prototype.removeBody = function(body, bodies, visible) {
-      var index = bodies.indexOf(body);
+      var bodies = bodies || null,
+          index = bodies ? bodies.indexOf(body) : -1,
+          visible = typeof(visible) !== 'undefined' ? visible : false;
+
+      body.visible = visible;
+
+      if (bodies) {
+        bodies.splice(index, 1);
+      }
       
-      body.visible = typeof(visible) !== 'undefined' ? visible : false;
-      bodies.splice(index, 1);
       this.bodiesToRemove.push(body);
-      //this.stage.removeChild(body);
     };
     
     World.prototype.removeBodies = function(bodies, preRemoveCallback) {
