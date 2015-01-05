@@ -888,6 +888,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     };
     
     World.prototype.addGift = function(gift) {
+      console.log('Adding gift of type ' + gift.constructor.name);
       this.gifts.push(gift);
       this.stage.addChild(gift);
       gift.play();
