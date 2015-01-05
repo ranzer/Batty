@@ -977,6 +977,15 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     };
     
     World.prototype.removeGifts = function() {
+      var gifts = this.gifts,
+          i = this.gifts.length;
+
+      while (i--) {
+        if (gifts[i].isActive && gifts[i].destroy) {
+          gifts[i].destroy();
+        }
+      }
+
       this.removeBodies(this.gifts);
     };
     
