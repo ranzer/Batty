@@ -100,7 +100,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     DynamicBody.prototype.updateAngleReflectionHorizontally = function() {
       this.angle = 360 - this.angle;
     };
-    
+
     DynamicBody.prototype.updateAngleReflectionVertically = function() {
       this.angle = 180 - this.angle;
     };
@@ -720,7 +720,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     Slider.prototype.onUpdateTransformed = function() {
       if (this.position.x < 0) {
         this.position.x = 0;
-      }	else if (this.position.x + this.width > this.world.width) {
+      }  else if (this.position.x + this.width > this.world.width) {
         this.position.x = this.world.width - this.width;
       }
       
