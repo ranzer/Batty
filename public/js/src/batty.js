@@ -895,11 +895,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     };
     
     World.prototype.removeGift = function(gift) {
-      var index = this.gifts.indexOf(gift);
-      
-      gift.visible = false;
-      this.gifts.splice(index, 1);
-      //this.stage.removeChild(gift);
+      this.removeBody(gift, this.gifts);
     };
     
     World.prototype.addCircle = function(circle) {
