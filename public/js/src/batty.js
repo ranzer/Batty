@@ -610,10 +610,12 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
           world = this.world,
           slider = world.slider;
           
+      this.lastTimeActionCalled = +new Date();
+
       slider.addAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
       slider.addAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
             
-      setTimeout(this.destroy.bind(this), 5000);
+      setTimeout(this.destroy.bind(this), this.actionExpireTime);
     };
     
     GunGift.prototype.destroy = function() {
