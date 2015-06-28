@@ -10,8 +10,8 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       // We use texture 'width' and 'height' instance properties rather then 'width' and 'height'
       // of 'this' variable in order to allow calling DynamicBody function without creating 
       // new object instance.
-      this.width = this.width || texture.width;
-      this.height = this.height || texture.height;
+      this.width = this.width || texture.frame.width;
+      this.height = this.height || texture.frame.height;
       this.position.x = options.x || this.width + 1;
       this.position.y = options.y || this.height + 1;
       this.vel = typeof (options.vel) !== 'undefined' ? options.vel : 15;
@@ -27,7 +27,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     DynamicBody.prototype = Object.create(PIXI.Sprite.prototype);
     DynamicBody.prototype.constructor = DynamicBody;
     DynamicBody.prototype.getCollidableBodies = function() {
-      return [];
+      return this.world.blocks;
     };
   
     DynamicBody.prototype.getRadians = function() {
@@ -215,7 +215,11 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       return Math.max(0, minPos - maxPos);
     };
     
-    DynamicBody.prototype.onUpdateTransformed = null;
+    DynamicBody.prototype.onUpdateTransformed = function(parent) {
+      this.wallCollide();
+      this.blocksCollide();
+    };
+    
     DynamicBody.prototype.onBlockCollided = null;
     DynamicBody.prototype.onOutOfScreen = null;
   
@@ -227,14 +231,6 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     
     Circle.prototype = Object.create(DynamicBody.prototype);
     Circle.prototype.constructor = Circle;
-    Circle.prototype.getCollidableBodies = function() {
-      return this.world.blocks;
-    };
-    
-    Circle.prototype.onUpdateTransformed = function(parent) {
-      this.wallCollide();
-      this.blocksCollide();
-    }
     
     Circle.prototype.onBlockCollided = function(block) {
       if (block.type === 'block' || block.type === 'slider') {
@@ -245,6 +241,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
         if (block.type === 'block') {
           if (block.gift) {
             this.world.addGift(block.gift);
+            block.gift.play();
           }
           
           this.world.removeBlock(block);
@@ -263,21 +260,12 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     Bullet.prototype = Object.create(DynamicBody.prototype);
     Bullet.prototype.constructor = Bullet;
     
-    Bullet.prototype.getCollidableBodies = function() {
-      return this.world.blocks;
-    };
-    
     Bullet.prototype.wallCollide = function() {
       var spritePosition = this.position;
       if (spritePosition.y < 0) {
         this.world.removeBullet(this);
       }
     };
-    
-    Bullet.prototype.onUpdateTransformed = function(parent) {
-      this.wallCollide();
-      this.blocksCollide();
-    }
     
     Bullet.prototype.onBlockCollided = function(block) {
       if (block.type === 'block') {
@@ -339,30 +327,42 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       return [ this.world.slider ];
     };
     
+    /*
+     * On block collided event handler function.
+     * @param {object} block A dynamic body object.
+     */
     Gift.prototype.onBlockCollided = function(block) {
-      var that = this,
-          existingGift;
       if (block.type === 'slider') {
         this.visible = false;
-        if (this.actionExpireTime) {
-          //console.log('gifts count: ' + this.world.gifts.length);
-          existingGift = this.world.gifts.filter(function(gift) {
-            //console.log('comparing gift of type ' + gift.constructor.name +
-            //  ' and ' + that.constructor.name);
-            //console.log('this.constructor: ' + that.constructor.name);
-            return gift.isActive && gift.constructor.name == that.constructor.name;
-          });
-          //console.log('existingGift.length: ' + existingGift.length);
-          if (existingGift.length) {
-            //console.log('add expire time to gift of type ' + existingGift[0].constructor.name);
-            existingGift[0].actionExpireTime += this.actionExpireTime;
-            return;
-          }
+        this.updateActiveGiftActionExpireTime();
+        this.executeAction();
+      }
+    };
+    
+    /*
+     * Finds and updates an active gift action expire time if 
+     * current gift's action has expire time period.
+     */
+    Gift.prototype.updateActiveGiftActionExpireTime = function() {
+      var existingGifts;
+      if (this.actionExpireTime) {
+        //console.log('gifts count: ' + this.world.gifts.length);
+        existingGifts = this.world.getGifts(this.constructor.name, true);
+        //console.log('existingGift.length: ' + existingGift.length);
+        if (existingGifts.length) {
+          //console.log('add expire time to gift of type ' + existingGift[0].constructor.name);
+          existingGifts[0].actionExpireTime += this.actionExpireTime;
         }
-        if (this.action) {
-          this.isActive = true;
-          this.action();
-        }
+      }
+    };
+    
+    /*
+     * Executes gift's action if current gift has one.
+     */
+    Gift.prototype.executeAction = function() {
+      if (this.action) {
+        this.isActive = true;
+        this.action();
       }
     };
     
@@ -381,7 +381,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       for (i = 0; i < balls3GiftTexturesLength; i++) {
         balls3GiftTextures.push(PIXI.TextureCache['3balls' + i + '.png']);
       }
-      
+ 
       Gift.apply(this, [balls3GiftTextures, world, options]);
       
       this.ballsCount = 3;
@@ -394,7 +394,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       var world = this.world;
           i = this.ballsCount,
           slider = world.slider,
-          circle;
+          circle = null;
         
       while (i--) {
         circle = world.createCircle({
@@ -403,7 +403,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
           angle: Math.floor(Math.random() * 90),
           vel: 10
         });
-        
+       
         world.addCircle(circle);
       }
 
@@ -430,13 +430,24 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       this.previousGetCollidableBodies = null;
       this.sliderKeyDownActionRef = this.sliderKeyDownAction.bind(this);
       this.sliderKeyUpActionRef = this.sliderKeyUpAction.bind(this);
+      
+      this.world.slider.addAction(this.world.slider.CROSSED_SIDE, this.sliderCrossedSide.bind(this));
     }
     
     HandGift.prototype = Object.create(Gift.prototype);
     HandGift.prototype.constructor = HandGift;
     
+    /**
+     * The slider's crossed side event handler function.
+     */
+    HandGift.prototype.sliderCrossedSide = function() {
+      if (this.catchedCircle) {
+        this.catchedCircle.vel = 0;
+      }
+    };
+    
     HandGift.prototype.releaseCircle = function() {
-      if (this.catchedCircle !== null) {
+      if (this.catchedCircle) {
         this.catchedCircle.angle = this.previousAngle;
         this.catchedCircle.position.y = this.world.slider.position.y - this.catchedCircle.height - 20;
         this.catchedCircle.vel = this.previousVel;
@@ -446,14 +457,14 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     };
     
     HandGift.prototype.sliderKeyDownAction = function(e) {
-      if (e.keyCode == 37 || e.keyCode == 39) {
-        if (this.catchedCircle) {
+      if (this.catchedCircle) {
+        if (e.keyCode == 37 || e.keyCode == 39) {
           console.log('changing cathedCircle.vel to ' + this.world.slider.vel);
           this.catchedCircle.vel = this.world.slider.vel;
+        } else if (e.keyCode == 32) {
+          console.log('releasing cathedCircle (HandGift)');
+          this.releaseCircle();
         }
-      } else if (e.keyCode == 32 && this.catchedCircle) {
-        console.log('releasing cathedCircle (HandGift)');
-        this.releaseCircle();
       }
     };
     
@@ -493,17 +504,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
           that.previousAngle = 180 - block.angle;
           that.previousVel = block.vel;
           that.catchedCircle = block;
-          that.catchedCircle.minX = block.position.x - slider.position.x;
-          that.catchedCircle.maxX = that.world.width - (slider.width - that.catchedCircle.minX);
           that.previousOnUpdateTransformed = block.onUpdateTransformed;
-          
-          block.onUpdateTransformed = function() {
-            if (this.position.x < that.catchedCircle.minX) {
-              this.position.x = that.catchedCircle.minX;
-            }  else if (this.position.x > that.catchedCircle.maxX) {
-              this.position.x = that.catchedCircle.maxX;
-            }
-          };
           
           block.angle = 0;
           block.vel = 0;
@@ -521,6 +522,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
 
       if (currentTime - this.lastTimeActionCalled > this.actionExpireTime) {
         this.isDestroying = true;
+        this.isActive = false;
         console.log('destroying ...');
         console.log('isDestroying (destroy): ' + this.isDestroying);
         // Check if previousGetCollidableBodies instance property is set
@@ -534,7 +536,6 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
           slider.removeAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
           slider.removeAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
         }
-        this.isActive = false;
       } else {
         setTimeout(this.destroy.bind(this), this.actionExpireTime - delta);
       }
@@ -586,7 +587,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
           delta = currentTime - this.lastTimeBulletFired,
           slider;
       
-      requestId = requestAnimationFrame(this.fireBullet.bind(this));
+      this.requestId = requestAnimationFrame(this.fireBullet.bind(this));
       if (delta > this.delay) {
         this.lastTimeBulletFired = currentTime;
         slider = this.world.slider;
@@ -600,7 +601,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
           });
           this.world.addBullet(bullet);
         } else {
-          cancelAnimationFrame(requestId);
+          cancelAnimationFrame(this.requestId);
         }
       }
     };
@@ -651,13 +652,13 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       this.addAction(Slider.KEY_DOWN, this.onKeyDown.bind(this));
       this.addAction(Slider.KEY_UP, this.onKeyUp.bind(this));
       
-      // Treba korisiti publish subscriber pattern
       window.addEventListener(Slider.KEY_DOWN, this.triggerActions.bind(this, Slider.KEY_DOWN));
       window.addEventListener(Slider.KEY_UP, this.triggerActions.bind(this, Slider.KEY_UP));
     }
     
     Slider.KEY_DOWN = 'keydown';
     Slider.KEY_UP = 'keyup';
+    Slider.CROSSED_SIDE = 'ps';
     
     Slider.prototype = Object.create(DynamicBody.prototype);
     
@@ -720,8 +721,10 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     Slider.prototype.onUpdateTransformed = function() {
       if (this.position.x < 0) {
         this.position.x = 0;
-      }  else if (this.position.x + this.width > this.world.width) {
+        this.triggerActions(this.CROSSED_SIDE);
+      } else if (this.position.x + this.width > this.world.width) {
         this.position.x = this.world.width - this.width;
+        this.triggerActions(this.CROSSED_SIDE);
       }
       
       this.blocksCollide();
@@ -746,7 +749,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       this.circleTexture = PIXI.TextureCache[this.BALL_TEXTURE_NAME];
       this.sliderTexture = PIXI.TextureCache[this.SLIDER_TEXTURE_NAME];
       this.bulletTexture = PIXI.TextureCache[this.BULLET_TEXTURE_NAME];
-      this.slider = new Slider(this.sliderTexture, this, { vel: 0, vel1: 35 });
+      this.slider = new Slider(this.sliderTexture, this, { vel: 0, vel1: 30 });
       this.blocks = new Array();
       this.circles = new Array();
       this.gifts = new Array();
@@ -887,11 +890,28 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
       }
     };
     
+    /**
+     * Return gifts of the specified type and activity.
+     * @param {string} type The type of gift.
+     * @param {string} active Is gift active or not.
+     * @return {Array} An array of active gifts.
+     */
+    World.prototype.getGifts = function(type, active) {
+      var gifts = this.gifts.filter(function(gift) {
+        return gift.isActive === active && gift.constructor.name == type;
+      });
+      
+      return gifts;
+    };
+    
+    World.prototype.addBody = function(body, bodies) {
+      bodies.push(body);
+      this.stage.addChild(body);
+    };
+    
     World.prototype.addGift = function(gift) {
       console.log('Adding gift of type ' + gift.constructor.name);
-      this.gifts.push(gift);
-      this.stage.addChild(gift);
-      gift.play();
+      this.addBody(gift, this.gifts);
     };
     
     World.prototype.removeGift = function(gift) {
@@ -899,13 +919,11 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     };
     
     World.prototype.addCircle = function(circle) {
-      this.circles.push(circle);
-      this.stage.addChild(circle);
+      this.addBody(circle, this.circles);
     };
     
     World.prototype.addBullet = function(bullet) {
-      this.bullets.push(bullet);
-      this.stage.addChild(bullet);
+      this.addBody(bullet, this.bullets);
     };
     
     World.prototype.createCircle = function(options) {
@@ -913,7 +931,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
         this.circleTexture,
         this,
         options);
-        
+      
       return circle;
     };
     
@@ -935,17 +953,21 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     }
     
     World.prototype.removeBody = function(body, bodies, visible) {
-      var bodies = bodies || null,
-          index = bodies ? bodies.indexOf(body) : -1,
-          visible = typeof(visible) !== 'undefined' ? visible : false;
-
-      body.visible = visible;
-
-      if (bodies) {
-        bodies.splice(index, 1);
-      }
+      var bodies, index, visible;
       
-      this.bodiesToRemove.push(body);
+      if (body) {
+        bodies = bodies || null,
+        index = Array.isArray(bodies) ? bodies.indexOf(body) : -1,
+        visible = visible || (typeof(bodies) == 'boolean' ? bodies : false);
+ 
+        body.visible = visible;
+
+        if (bodies && index > -1) {
+          bodies.splice(index, 1);
+        }
+        
+        this.bodiesToRemove.push(body);
+      }
     };
     
     World.prototype.removeBodies = function(bodies, preRemoveCallback) {
@@ -1020,20 +1042,18 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     World.prototype.showMessage = function(id, text) {
       var message, deferred;
       
-      message = this.messages[id];
-      
-      if (!message) {
-        message = new Message(text);
-      
-        this.addMessage(id, message);        
-      } else {
-        message.setText(text);
-      }
-      
       if (!this.isMessageShown(id)) {
+        message = this.messages[id];
+        if (!message) {
+          message = new Message(text);
+          this.addMessage(id, message);
+        } else {
+          message.setText(text);
+        }
         deferred = message.show();
       } else {
-        deferred = Q.defer().resolve();
+        deferred = Q.defer();
+        deferred.resolve();
       }
       
       return deferred.promise;
@@ -1042,10 +1062,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     World.prototype.hideMessage = function(id) {
       var deferred;
       
-      //console.log('id: ' + id + ', visible: ' + this.isMessageShown(id));
-      
       if (this.isMessageShown(id)) {
-        //console.log('hiding message ' + id);
         message = this.messages[id];
         deferred = message.show(false);
       } else {
@@ -1113,13 +1130,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
         }
       }
       
-      var bodiesToRemoveLength = this.bodiesToRemove.length;
-      
-      for (var i = 0; i < bodiesToRemoveLength; i++) {
-        this.stage.removeChild(this.bodiesToRemove[i]);
-      }
-      
-      this.bodiesToRemove.length = 0;
+      this.removeBodies(this.bodiesToRemove);
       // Here add code for removing object from stage.
       
       this.renderer.render(this.stage);
@@ -1294,7 +1305,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     function GameService(world, options) {
       var options = options || {};
       
-      this.currentLevel = 1;
+      this.currentLevel = 0;
       this.maxLevels = options.maxLevels || 5;
       this.levelDataUrl = options.levelDataUrl || 'http://localhost:4000/levels/';
       this.world = world;
@@ -1354,6 +1365,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
             that.startGame(true);
           })
           .fail(function(err) {
+            console.log(err);
             alert('Kaboom !');
           })
           .done(function() {
@@ -1374,7 +1386,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     
     GameService.prototype.startGame = function(start) {
       console.log('starting game ...');
-      this.world.addCircles(1, 225, 15);
+      this.world.addCircles(1, 225, 10);
       this.world.stopAnimation(!start);
       this.world.gameStarted = start;      
     };
@@ -1382,9 +1394,11 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     return {
       DynamicBody: DynamicBody,
       Circle: Circle,
+      Bullet: Bullet,
       Gift: Gift,
       Balls3Gift: Balls3Gift,
       HandGift: HandGift,
+      GunGift: GunGift,
       Slider: Slider,
       World: World,
       GameService: GameService
