@@ -1375,17 +1375,18 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
           });
       }
     };
-    
+
     GameService.prototype.loadNextLevel = function() {
-      var that = this;
-      
+      var that = this,
+          nextLevelUrl = this.levelDataUrl + (this.currentLevel + 1);
+
       return Q($.ajax({
         dataType: 'json',
-        url: this.levelDataUrl + (this.currentLevel + 1) + '.json',
+        url: nextLevelUrl,
         type: 'GET'
       }));
     };
-    
+
     GameService.prototype.startGame = function(start) {
       console.log('starting game ...');
       this.world.addCircles(1, 225, 10);
