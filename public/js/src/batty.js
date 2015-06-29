@@ -1,14 +1,15 @@
-define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
+define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
+  var $ = $.default || $;
   return function(window) {
     function DynamicBody(texture, world, options) {
       var radians;
-      
+
       PIXI.Sprite.apply(this, [texture]);
-      
+
       this.world = world;
-      
+
       // We use texture 'width' and 'height' instance properties rather then 'width' and 'height'
-      // of 'this' variable in order to allow calling DynamicBody function without creating 
+      // of 'this' variable in order to allow calling DynamicBody function without creating
       // new object instance.
       this.width = this.width || texture.frame.width;
       this.height = this.height || texture.frame.height;
