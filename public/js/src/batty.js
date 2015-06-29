@@ -757,19 +757,20 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       this.bullets = new Array();
       this.bodiesToRemove = [];
       this.messages = {};
-      
+      this.gameContainer = options.gameContainer || window.document.body;
+
       if (!this.circleTexture) {
         throw new Error('The frameId ' + this.BALL_TEXTURE_NAME + ' does not exist in the texture cache ' + this);
       }
-      
+
       //this.addCircles(1, 225, 10);
       //this.addBlocks(40);
       //this.stage.addChild(this.slider);
       //this.blocks.push(this.slider);
-      
-      window.document.body.appendChild(this.renderer.view);
+
+      this.gameContainer.appendChild(this.renderer.view);
     }
-    
+
     World.prototype.BLOCKS_TEXTURE_NAMES = [ 'blue.png', 'purple.png', 'red.png', 'yellow.png' ],
     World.prototype.BALL_TEXTURE_NAME = 'ball.png';
     World.prototype.SLIDER_TEXTURE_NAME = 'slider.png';
@@ -1273,64 +1274,64 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
           if (this.alpha < 0) {
             this.alpha = 0;
             var promise = this.showDeferred.promise;
-            
+
             //console.log('promise.isFulfilled (updateTransform): ' + promise.isFulfilled());
             //console.log('promise.isPending (updateTransform): ' + promise.isPending());
-            
+
             this.showDeferred.resolve(this);
           }
         }
       }
-    
+
       PIXI.Text.prototype.updateTransform.call(this);
     };
-    
+
     Message.prototype.show = function(show) {
       this.showMessage = typeof(show) == 'undefined' || show;
-      this.showDeferred = this.showMessage && this.isHidden() || 
-        !this.showMessage && this.isVisible() ? 
-         Q.defer() : Q.defer().resolve();
-      
+      this.showDeferred = this.showMessage && this.isHidden() ||
+      !this.showMessage && this.isVisible() ?
+        Q.defer() : Q.defer().resolve();
+
       return this.showDeferred;
     };
-    
+
     Message.prototype.isVisible = function() {
       //console.log('alpha: ' + this.alpha);
       return this.alpha == 1;
     };
-    
+
     Message.prototype.isHidden = function() {
       return this.alpha == 0;
     };
-    
+
     function GameService(world, options) {
       var options = options || {};
-      
+
       this.currentLevel = 0;
       this.maxLevels = options.maxLevels || 5;
-      this.levelDataUrl = options.levelDataUrl || 'http://localhost:4000/levels/';
+      this.levelDataUrl = options.levelDataUrl;
       this.world = world;
-      
+
       world.onGameLost = this.endGame.bind(this);
       world.onGameWon = this.endLevel.bind(this);
     }
-    
+
     GameService.prototype.drawWorld = function() {
       this.world.draw();
     };
-    
+
     GameService.prototype.endGame = function() {
       this.world.gameStarted = false;
       this.world.stopAnimation(true);
       this.world.showLostGameMessage();
     };
-    
+
     GameService.prototype.endLevel = function() {
       var that = this;
-      
+
       this.world.gameStarted = false;
       this.world.stopAnimation(true);
-      
+
       if (this.currentLevel == this.maxLevels) {
         that.world.showWonGameMessage();
       } else {
