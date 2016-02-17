@@ -104,7 +104,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     DynamicBody.prototype.updateAngleReflectionVertically = function() {
       this.angle = 180 - this.angle;
     };
-		
+    
     DynamicBody.prototype.blocksCollide = function() {
       var blocks = this.getCollidableBodies(),
           blocksLength = blocks.length,
@@ -200,9 +200,9 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
           x22 = block.position.x + block.width,
           y22 = block.position.y + block.height;
       
-			width = this.getMaxIntersection(x11, x12, x21, x22);
+      width = this.getMaxIntersection(x11, x12, x21, x22);
       height = this.getMaxIntersection(y11, y12, y21, y22);
-			
+      
       return { width: width, height: height };
     };
     
@@ -425,16 +425,16 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
                 block.onUpdateTransformed = function() {
                   if (this.position.x < that.catchedCircle.minX) {
                     this.position.x = that.catchedCircle.minX;
-                  }	else if (this.position.x > that.catchedCircle.maxX) {
+                  } else if (this.position.x > that.catchedCircle.maxX) {
                     this.position.x = that.catchedCircle.maxX;
                   }
                 };
                 
                 block.angle = 0;
-                block.vel = 0;								
+                block.vel = 0;                
                 block.position.y = slider.position.y - block.height - 1;
               }
-            };	
+            };  
             
             setTimeout(this.destroy, 5000);
           },
@@ -543,7 +543,7 @@ define(['pixi', 'jquery', 'q'], function(PIXI, $, Q) {
     Slider.prototype.onUpdateTransformed = function() {
       if (this.position.x < 0) {
         this.position.x = 0;
-      }	else if (this.position.x + this.width > this.world.width) {
+      } else if (this.position.x + this.width > this.world.width) {
         this.position.x = this.world.width - this.width;
       }
       
