@@ -1,31 +1,31 @@
 define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
   var Batty = Batty(window);
   var callPrototypeMethod = function(klass, method, obj, args) {
-		var fn = Batty[klass].prototype[method];
-		
-		return fn.apply(obj, args);
-	};
-	var createDefaultTexture = function() {
-		return PIXI.TextureCache[Batty.World.prototype.BALL_TEXTURE_NAME];
-	};
-	var loadAssets = function(assets, completeCallback) {
-		var assetLoader = new PIXI.AssetLoader(assets);
-		
-		assetLoader.onComplete = function() {
-			completeCallback();
-		};
+    var fn = Batty[klass].prototype[method];
+    
+    return fn.apply(obj, args);
+  };
+  var createDefaultTexture = function() {
+    return PIXI.TextureCache[Batty.World.prototype.BALL_TEXTURE_NAME];
+  };
+  var loadAssets = function(assets, completeCallback) {
+    var assetLoader = new PIXI.AssetLoader(assets);
+    
+    assetLoader.onComplete = function() {
+      completeCallback();
+    };
  
-		assetLoader.load();
-	};
-	suite('DynamicBody', function() {
+    assetLoader.load();
+  };
+  suite('DynamicBody', function() {
     setup(function(done) {
       var assets = [ 'base/SpriteSheet.json' ],
-					completeCallback = function() {
-						sinon.spy(PIXI, 'Sprite');
-						sinon.stub(PIXI.Sprite.prototype, 'updateTransform');
-						
-						done();
-					};
+          completeCallback = function() {
+            sinon.spy(PIXI, 'Sprite');
+            sinon.stub(PIXI.Sprite.prototype, 'updateTransform');
+            
+            done();
+          };
    
       loadAssets(assets, completeCallback);
     });    
@@ -104,8 +104,8 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
           worldMock = {},
           options = {},
           doneCallback;
-			
-			doneCallback = function(dynamicBody) {
+      
+      doneCallback = function(dynamicBody) {
         expect(dynamicBody.vel).to.be.equal(15);
         expect(dynamicBody.position.x).to.be.equal(dynamicBody.width + 1);
         expect(dynamicBody.position.y).to.be.equal(dynamicBody.height + 1);
@@ -574,8 +574,8 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
       sinon.stub(dynamicBodyMock, 'getMaxIntersection').returns(10);
     
       result = callPrototypeMethod('DynamicBody', 'getIntersectionRect', dynamicBodyMock, [ blockMock ]);
-			
-			getMaxIntersectionFirstCallArgs = dynamicBodyMock.getMaxIntersection.firstCall.args;
+      
+      getMaxIntersectionFirstCallArgs = dynamicBodyMock.getMaxIntersection.firstCall.args;
       getMaxIntersectionSecondCallArgs = dynamicBodyMock.getMaxIntersection.secondCall.args;
       
       expect(result.height).to.be.equal(10);
@@ -613,324 +613,324 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
     });
     test.skip('onUpdateTransformed', function() {
     });
-		suite('onBlockCollided', function() {
-		  var createCircleMock = function() {
-				return {
-					blockCollide: function() {},
-					world: {
-						removeBlock: function() {}
-					}
-				}
-			};
-			var testBlock = function(circleMock, blockMock, assertCallback) {
-				sinon.spy(circleMock, 'blockCollide');
-				sinon.spy(circleMock.world, 'removeBlock');
-				
-				callPrototypeMethod('Circle', 'onBlockCollided', circleMock, [ blockMock ]);
-				
-				expect(circleMock.blockCollide.callCount).to.be.equal(1);
-				expect(circleMock.blockCollide.calledWith(blockMock)).to.be.ok();
-				expect(circleMock.world.removeBlock.callCount).to.be.equal(1);
-				expect(circleMock.world.removeBlock.calledWith(blockMock)).to.be.ok();
-				
-				if (assertCallback) {
-				  assertCallback(circleMock);
-				};
-			};
-			test('when block is of block type', function() {
-			  var circleMock = createCircleMock(),
-				    blockMock = { type: 'block' };
-				
-				testBlock(circleMock, blockMock);
-			});
-			test('when block is of block type and has gift', function(done) {
-			  var circleMock = createCircleMock(),
-						blockMock = { type: 'block', gift: {} },
-						assertCallback;
-						
-				circleMock.world.addGift = function() {};
-				
-				sinon.spy(circleMock.world, 'addGift');
-				
-				assertCallback = function(circleMock) {
-				  expect(circleMock.world.addGift.callCount).to.be.equal(1);
-					expect(circleMock.world.addGift.calledWith(blockMock.gift)).to.be.ok();
-					
-					done();
-				};
-				
-				testBlock(circleMock, blockMock, assertCallback);
-			});
-			test('when block is of slider type', function() {
-			  var circleMock = createCircleMock(),
-						blockMock = { type: 'slider' };
-				
-				sinon.spy(circleMock, 'blockCollide');
-				
-				callPrototypeMethod('Circle', 'onBlockCollided', circleMock, [ blockMock ]);
-				
-				expect(circleMock.blockCollide.callCount).to.be.equal(1);
-				expect(circleMock.blockCollide.calledWith(blockMock)).to.be.ok();
-			});
-		});
+    suite('onBlockCollided', function() {
+      var createCircleMock = function() {
+        return {
+          blockCollide: function() {},
+          world: {
+            removeBlock: function() {}
+          }
+        }
+      };
+      var testBlock = function(circleMock, blockMock, assertCallback) {
+        sinon.spy(circleMock, 'blockCollide');
+        sinon.spy(circleMock.world, 'removeBlock');
+        
+        callPrototypeMethod('Circle', 'onBlockCollided', circleMock, [ blockMock ]);
+        
+        expect(circleMock.blockCollide.callCount).to.be.equal(1);
+        expect(circleMock.blockCollide.calledWith(blockMock)).to.be.ok();
+        expect(circleMock.world.removeBlock.callCount).to.be.equal(1);
+        expect(circleMock.world.removeBlock.calledWith(blockMock)).to.be.ok();
+        
+        if (assertCallback) {
+          assertCallback(circleMock);
+        };
+      };
+      test('when block is of block type', function() {
+        var circleMock = createCircleMock(),
+            blockMock = { type: 'block' };
+        
+        testBlock(circleMock, blockMock);
+      });
+      test('when block is of block type and has gift', function(done) {
+        var circleMock = createCircleMock(),
+            blockMock = { type: 'block', gift: {} },
+            assertCallback;
+            
+        circleMock.world.addGift = function() {};
+        
+        sinon.spy(circleMock.world, 'addGift');
+        
+        assertCallback = function(circleMock) {
+          expect(circleMock.world.addGift.callCount).to.be.equal(1);
+          expect(circleMock.world.addGift.calledWith(blockMock.gift)).to.be.ok();
+          
+          done();
+        };
+        
+        testBlock(circleMock, blockMock, assertCallback);
+      });
+      test('when block is of slider type', function() {
+        var circleMock = createCircleMock(),
+            blockMock = { type: 'slider' };
+        
+        sinon.spy(circleMock, 'blockCollide');
+        
+        callPrototypeMethod('Circle', 'onBlockCollided', circleMock, [ blockMock ]);
+        
+        expect(circleMock.blockCollide.callCount).to.be.equal(1);
+        expect(circleMock.blockCollide.calledWith(blockMock)).to.be.ok();
+      });
+    });
   });
-	suite('Gift', function() {
-		test('default constructor', function() {
-		  var textures = [ createDefaultTexture() ],
-					world = {},
-					gift;
-					
-			gift = new Batty.Gift(textures, world);
-			
-			expect(gift.angle).to.be.equal(90);
-			expect(gift.action).to.be.equal(undefined);
-			expect(gift.textures).to.be.equal(textures);
-			expect(gift.animationSpeed).to.be.equal(1);
-			expect(gift.loop).to.be.ok();
-			expect(gift.onComplete).to.be.equal(null);
-			expect(gift.currentFrame).to.be.equal(0);
-			expect(gift.playing).to.not.be.ok();
-			expect(gift.type).to.be.equal('gift');
-		});
-		test('options constructor', function() {
-		  var textures = [ createDefaultTexture() ],
-					world = {},
-					options = { 
-						angle: 30,
-						action: function() {},
-						animationSpeed: 2,
-						loop: false,
-						onComplete: function() {},
-						currentFrame: 1,
-						playing: true
-					},
-					gift;
-					
-			gift = new Batty.Gift(textures, world, options);
-			
-			expect(gift.angle).to.be.equal(options.angle);
-			expect(gift.action).to.be.equal(options.action);
-			expect(gift.textures).to.be.equal(textures);
-			expect(gift.animationSpeed).to.be.equal(options.animationSpeed);
-			expect(gift.loop).to.be.equal(options.loop);
-			expect(gift.onComplete).to.be.equal(options.onComplete);
-			expect(gift.currentFrame).to.be.equal(options.currentFrame);
-			expect(gift.playing).to.be.equal(options.playing);
-			expect(gift.type).to.be.equal('gift');
-		});
-		test.skip('prototype', function() {
-		});
-		test.skip('onUpdateTransformed', function() {
-		});
-		test.skip('getCollidableBodies', function() {
-		});
-		suite('onBlockCollided', function() {
-			var createGiftMock = function() {
-			  var actionInit = function() {};
-				var mock = {
-					actionInit: actionInit,
-					action: function() {
-						return {
-							init: this.actionInit
-						}
-					},
-					world: {
-						slider: {},
-						removeGift: function() {}
-					}
-				};
-				
-				sinon.spy(mock.world, 'removeGift');
-				sinon.spy(mock, 'action');
-				sinon.spy(mock, 'actionInit');
-				
-				return mock;
-			};
-			test('when block is not of slider type', function() {
-			  var giftMock = createGiftMock(),
-						blockMock = { type: 'none' };
-				
-				callPrototypeMethod('Gift', 'onBlockCollided', giftMock, [ blockMock ]);
-				
-				expect(giftMock.world.removeGift.callCount).to.be.equal(0);
-				expect(giftMock.action.callCount).to.be.equal(0);
-				expect(giftMock.actionInit.callCount).to.be.equal(0);
-			});
-			test('when block is of slider type and there is no action', function() {
-			  var giftMock = createGiftMock(),
-						blockMock = { type: 'slider' };
-						
-				giftMock.action = null;
-				
-				callPrototypeMethod('Gift', 'onBlockCollided', giftMock, [ blockMock ]);
-				
-				expect(giftMock.world.removeGift.callCount).to.be.equal(1);
-				expect(giftMock.world.removeGift.calledWith(giftMock)).to.be.ok();
-				expect(giftMock.actionInit.callCount).to.be.equal(0);
-			});
-			test('when block is of slider type and there is an action', function() {
-				var giftMock = createGiftMock(),
-						blockMock = { type: 'slider' };
-				
-				callPrototypeMethod('Gift', 'onBlockCollided', giftMock, [ blockMock ]);
-				
-				expect(giftMock.world.removeGift.callCount).to.be.equal(1);
-				expect(giftMock.world.removeGift.calledWith(giftMock)).to.be.ok();
-				expect(giftMock.action.callCount).to.be.equal(1);
-				expect(giftMock.action.calledWith(giftMock.world.slider)).to.be.ok();
-				expect(giftMock.actionInit.callCount).to.be.equal(1);				
-			});
-		});
-	});
-	suite('Balls3Gift', function() {
-		test.skip('default constructor', function() {
-		});
-		test.skip('non-default constructor', function() {
-		});
-	});
-	suite('HandGift', function() {
-		test.skip('default constructor', function() {
-		});
-		test.skip('non-default constructor', function() {
-		});
-	});
-	suite('Slider', function() {
-		var createWorldMock = function() {
-			return {
-				height: 100,
-				width: 200
-			}
-		};
-		suite('constructor', function() {
-			setup(function(done) {
-				var assets = [ 'base/SpriteSheet.json' ],
-						completeCallback = function() {
-							sinon.spy(Batty, 'DynamicBody');
-							sinon.spy(window, 'addEventListener');	
-							sinon.spy(Batty.Slider.prototype, 'addAction');		
-				
-							done();
-						};
+  suite('Gift', function() {
+    test('default constructor', function() {
+      var textures = [ createDefaultTexture() ],
+          world = {},
+          gift;
+          
+      gift = new Batty.Gift(textures, world);
+      
+      expect(gift.angle).to.be.equal(90);
+      expect(gift.action).to.be.equal(undefined);
+      expect(gift.textures).to.be.equal(textures);
+      expect(gift.animationSpeed).to.be.equal(1);
+      expect(gift.loop).to.be.ok();
+      expect(gift.onComplete).to.be.equal(null);
+      expect(gift.currentFrame).to.be.equal(0);
+      expect(gift.playing).to.not.be.ok();
+      expect(gift.type).to.be.equal('gift');
+    });
+    test('options constructor', function() {
+      var textures = [ createDefaultTexture() ],
+          world = {},
+          options = { 
+            angle: 30,
+            action: function() {},
+            animationSpeed: 2,
+            loop: false,
+            onComplete: function() {},
+            currentFrame: 1,
+            playing: true
+          },
+          gift;
+          
+      gift = new Batty.Gift(textures, world, options);
+      
+      expect(gift.angle).to.be.equal(options.angle);
+      expect(gift.action).to.be.equal(options.action);
+      expect(gift.textures).to.be.equal(textures);
+      expect(gift.animationSpeed).to.be.equal(options.animationSpeed);
+      expect(gift.loop).to.be.equal(options.loop);
+      expect(gift.onComplete).to.be.equal(options.onComplete);
+      expect(gift.currentFrame).to.be.equal(options.currentFrame);
+      expect(gift.playing).to.be.equal(options.playing);
+      expect(gift.type).to.be.equal('gift');
+    });
+    test.skip('prototype', function() {
+    });
+    test.skip('onUpdateTransformed', function() {
+    });
+    test.skip('getCollidableBodies', function() {
+    });
+    suite('onBlockCollided', function() {
+      var createGiftMock = function() {
+        var actionInit = function() {};
+        var mock = {
+          actionInit: actionInit,
+          action: function() {
+            return {
+              init: this.actionInit
+            }
+          },
+          world: {
+            slider: {},
+            removeGift: function() {}
+          }
+        };
+        
+        sinon.spy(mock.world, 'removeGift');
+        sinon.spy(mock, 'action');
+        sinon.spy(mock, 'actionInit');
+        
+        return mock;
+      };
+      test('when block is not of slider type', function() {
+        var giftMock = createGiftMock(),
+            blockMock = { type: 'none' };
+        
+        callPrototypeMethod('Gift', 'onBlockCollided', giftMock, [ blockMock ]);
+        
+        expect(giftMock.world.removeGift.callCount).to.be.equal(0);
+        expect(giftMock.action.callCount).to.be.equal(0);
+        expect(giftMock.actionInit.callCount).to.be.equal(0);
+      });
+      test('when block is of slider type and there is no action', function() {
+        var giftMock = createGiftMock(),
+            blockMock = { type: 'slider' };
+            
+        giftMock.action = null;
+        
+        callPrototypeMethod('Gift', 'onBlockCollided', giftMock, [ blockMock ]);
+        
+        expect(giftMock.world.removeGift.callCount).to.be.equal(1);
+        expect(giftMock.world.removeGift.calledWith(giftMock)).to.be.ok();
+        expect(giftMock.actionInit.callCount).to.be.equal(0);
+      });
+      test('when block is of slider type and there is an action', function() {
+        var giftMock = createGiftMock(),
+            blockMock = { type: 'slider' };
+        
+        callPrototypeMethod('Gift', 'onBlockCollided', giftMock, [ blockMock ]);
+        
+        expect(giftMock.world.removeGift.callCount).to.be.equal(1);
+        expect(giftMock.world.removeGift.calledWith(giftMock)).to.be.ok();
+        expect(giftMock.action.callCount).to.be.equal(1);
+        expect(giftMock.action.calledWith(giftMock.world.slider)).to.be.ok();
+        expect(giftMock.actionInit.callCount).to.be.equal(1);       
+      });
+    });
+  });
+  suite('Balls3Gift', function() {
+    test.skip('default constructor', function() {
+    });
+    test.skip('non-default constructor', function() {
+    });
+  });
+  suite('HandGift', function() {
+    test.skip('default constructor', function() {
+    });
+    test.skip('non-default constructor', function() {
+    });
+  });
+  suite('Slider', function() {
+    var createWorldMock = function() {
+      return {
+        height: 100,
+        width: 200
+      }
+    };
+    suite('constructor', function() {
+      setup(function(done) {
+        var assets = [ 'base/SpriteSheet.json' ],
+            completeCallback = function() {
+              sinon.spy(Batty, 'DynamicBody');
+              sinon.spy(window, 'addEventListener');  
+              sinon.spy(Batty.Slider.prototype, 'addAction');   
+        
+              done();
+            };
    
-				loadAssets(assets, completeCallback);
-			});
-			test('default constructor', function() {			  
-				var texture = createDefaultTexture(),
-						worldMock = createWorldMock(),
-						slider;
-				
-				slider = new Batty.Slider(texture, worldMock);
-				
-				expect(slider.x).to.be.equal(worldMock.width / 2 - texture.frame.width / 2);
-				expect(slider.y).to.be.equal(worldMock.height - texture.frame.height - 1);
-				expect(slider.angle).to.be.equal(0);
-				expect(slider.vel1).to.be.equal(15);
-				expect(slider.type).to.be.equal('slider');
-				expect(slider.maxX).to.be.equal(worldMock.width - texture.frame.width);
-				expect(slider.actions).to.be.an('object');
-				expect(slider.addAction.callCount).to.be.equal(2);
-				expect(window.addEventListener.callCount).to.be.equal(2);
-			});
-			test('non-default constructor', function() {
-				var texture = createDefaultTexture(),
-						worldMock = createWorldMock(),
-						options = {
-							x: 10,
-							y: 15,
-							vel1: 20
-						},
-						slider;
-				
-				slider = new Batty.Slider(texture, worldMock, options);
-				
-				expect(slider.x).to.be.equal(options.x);
-				expect(slider.y).to.be.equal(options.y);
-				expect(slider.angle).to.be.equal(0);
-				expect(slider.vel1).to.be.equal(options.vel1);
-				expect(slider.type).to.be.equal('slider');
-				expect(slider.maxX).to.be.equal(worldMock.width - texture.frame.width);
-				expect(slider.actions).to.be.an('object');
-				expect(slider.addAction.callCount).to.be.equal(2);
-				expect(window.addEventListener.callCount).to.be.equal(2);
-			});
-			teardown(function() {
-				Batty.DynamicBody.restore();
-				Batty.Slider.prototype.addAction.restore();
-				window.addEventListener.restore();
-			});
-		});
-		test('getCollidableBodies', function() {
-			var sliderMock = { 
-						world: {
-							circles: []
-						}
-					},
-					collidableBodies;
-			
-			collidableBodies = callPrototypeMethod('Slider', 'getCollidableBodies', sliderMock);
-		
-			expect(collidableBodies).to.be.equal(sliderMock.world.circles);
-		});
-		test('addAction', function() {
-			var sliderMock = {
-					  actions: {
-						}
-					},
-					type1 = 'type1',
-					type2 = 'type2',
-					action1 = function() {},
-					action2 = function() {};
-			
-			callPrototypeMethod('Slider', 'addAction', sliderMock, [ type1, action1 ]);
-			callPrototypeMethod('Slider', 'addAction', sliderMock, [ type2, action2 ]);
-			
-			expect(sliderMock.actions).to.only.have.keys([ type1, type2 ]);
-			expect(sliderMock.actions[type1]).to.have.length(1);
-			expect(sliderMock.actions[type2]).to.have.length(1);
-			expect(sliderMock.actions[type1]).to.contain(action1);
-			expect(sliderMock.actions[type2]).to.contain(action2);
-		});
-		suite('removeAction', function() {
-			var createSliderMock = function() {
-				return {
-					actions: {
-						'type1': [
-							function() {}
-						]
-					}
-				};		
-			};		
-		  test('when type does not exist', function() {
-				var sliderMock = createSliderMock(),
-						type = 'nonExistingType';
-				
-				callPrototypeMethod('Slider', 'removeAction', sliderMock, [ type, null ]);
-				
-				expect(sliderMock.actions).to.only.have.key('type1');
-			});
-			test('when type and action exist', function() {
-				var sliderMock = createSliderMock();
-						newType = 'type2',
-						newAction = function() {};
-				
-				sliderMock.actions[newType] = [ newAction ];
-				
-				callPrototypeMethod('Slider', 'removeAction', sliderMock, [ newType, newAction ]);
-				
-				expect(sliderMock.actions).to.only.have.keys([ 'type1', newType ]);
-				expect(sliderMock.actions[newType]).to.have.length(0);
-			});
-			test('when type exists and action do not', function() {
-				var sliderMock = createSliderMock(),
-						type = 'type1',
-						action = function() {};
-				
-				callPrototypeMethod('Slider', 'removeAction', sliderMock, [ type, action ]);
-				
-				expect(sliderMock.actions).to.only.have.key('type1');
-				expect(sliderMock.actions[type]).to.have.length(1);
-			});
-		});
+        loadAssets(assets, completeCallback);
+      });
+      test('default constructor', function() {        
+        var texture = createDefaultTexture(),
+            worldMock = createWorldMock(),
+            slider;
+        
+        slider = new Batty.Slider(texture, worldMock);
+        
+        expect(slider.x).to.be.equal(worldMock.width / 2 - texture.frame.width / 2);
+        expect(slider.y).to.be.equal(worldMock.height - texture.frame.height - 1);
+        expect(slider.angle).to.be.equal(0);
+        expect(slider.vel1).to.be.equal(15);
+        expect(slider.type).to.be.equal('slider');
+        expect(slider.maxX).to.be.equal(worldMock.width - texture.frame.width);
+        expect(slider.actions).to.be.an('object');
+        expect(slider.addAction.callCount).to.be.equal(2);
+        expect(window.addEventListener.callCount).to.be.equal(2);
+      });
+      test('non-default constructor', function() {
+        var texture = createDefaultTexture(),
+            worldMock = createWorldMock(),
+            options = {
+              x: 10,
+              y: 15,
+              vel1: 20
+            },
+            slider;
+        
+        slider = new Batty.Slider(texture, worldMock, options);
+        
+        expect(slider.x).to.be.equal(options.x);
+        expect(slider.y).to.be.equal(options.y);
+        expect(slider.angle).to.be.equal(0);
+        expect(slider.vel1).to.be.equal(options.vel1);
+        expect(slider.type).to.be.equal('slider');
+        expect(slider.maxX).to.be.equal(worldMock.width - texture.frame.width);
+        expect(slider.actions).to.be.an('object');
+        expect(slider.addAction.callCount).to.be.equal(2);
+        expect(window.addEventListener.callCount).to.be.equal(2);
+      });
+      teardown(function() {
+        Batty.DynamicBody.restore();
+        Batty.Slider.prototype.addAction.restore();
+        window.addEventListener.restore();
+      });
+    });
+    test('getCollidableBodies', function() {
+      var sliderMock = { 
+            world: {
+              circles: []
+            }
+          },
+          collidableBodies;
+      
+      collidableBodies = callPrototypeMethod('Slider', 'getCollidableBodies', sliderMock);
+    
+      expect(collidableBodies).to.be.equal(sliderMock.world.circles);
+    });
+    test('addAction', function() {
+      var sliderMock = {
+            actions: {
+            }
+          },
+          type1 = 'type1',
+          type2 = 'type2',
+          action1 = function() {},
+          action2 = function() {};
+      
+      callPrototypeMethod('Slider', 'addAction', sliderMock, [ type1, action1 ]);
+      callPrototypeMethod('Slider', 'addAction', sliderMock, [ type2, action2 ]);
+      
+      expect(sliderMock.actions).to.only.have.keys([ type1, type2 ]);
+      expect(sliderMock.actions[type1]).to.have.length(1);
+      expect(sliderMock.actions[type2]).to.have.length(1);
+      expect(sliderMock.actions[type1]).to.contain(action1);
+      expect(sliderMock.actions[type2]).to.contain(action2);
+    });
+    suite('removeAction', function() {
+      var createSliderMock = function() {
+        return {
+          actions: {
+            'type1': [
+              function() {}
+            ]
+          }
+        };    
+      };    
+      test('when type does not exist', function() {
+        var sliderMock = createSliderMock(),
+            type = 'nonExistingType';
+        
+        callPrototypeMethod('Slider', 'removeAction', sliderMock, [ type, null ]);
+        
+        expect(sliderMock.actions).to.only.have.key('type1');
+      });
+      test('when type and action exist', function() {
+        var sliderMock = createSliderMock();
+            newType = 'type2',
+            newAction = function() {};
+        
+        sliderMock.actions[newType] = [ newAction ];
+        
+        callPrototypeMethod('Slider', 'removeAction', sliderMock, [ newType, newAction ]);
+        
+        expect(sliderMock.actions).to.only.have.keys([ 'type1', newType ]);
+        expect(sliderMock.actions[newType]).to.have.length(0);
+      });
+      test('when type exists and action do not', function() {
+        var sliderMock = createSliderMock(),
+            type = 'type1',
+            action = function() {};
+        
+        callPrototypeMethod('Slider', 'removeAction', sliderMock, [ type, action ]);
+        
+        expect(sliderMock.actions).to.only.have.key('type1');
+        expect(sliderMock.actions[type]).to.have.length(1);
+      });
+    });
     suite('onKeyDown', function() {
       var testOnKeyDown = function(keyCode, doneCallback) {
         var sliderMock = { vel: 0, vel1: 10 },
@@ -1051,7 +1051,7 @@ define([ 'batty', 'pixi', 'modernizr' ], function(Batty, PIXI, Modernizr) {
         sliderMock.blocksCollide.reset();
       });
     });
-	});
+  });
   suite('World', function() {
     setup(function(done) {
       var assets = [ 'base/SpriteSheet.json' ];
