@@ -30,16 +30,17 @@
 				}
 				
 				PIXI.dontSayHello = true;
-				
+
 				assetLoader = new PIXI.AssetLoader(assets);
 				
 				assetLoader.onComplete = function() {
-					var world = new Batty.World({ height: 600 }),
-              gameService = new Batty.GameService(world);
+					var world = new Batty.World({ height: document.documentElement.clientHeight, width: document.documentElement.clientWidth }),
+						gameService = new Batty.GameService(world, { levelDataUrl: 'http://localhost:4000/levels/' });
               
           gameService
             .loadNextLevel()
             .then(function(data) {
+              gameService.currentLevel++;
               return world.initLevel(data);
             })
             .then(function() {

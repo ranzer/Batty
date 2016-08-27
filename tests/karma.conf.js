@@ -32,13 +32,13 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-    
+      'src/batty.js': ['coverage']
     },
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['dots', 'junit'],
+    reporters: ['dots', 'junit', 'coverage'],
   
     junitReporter: {
       outputFile: 'results/LastResult.xml'
@@ -73,7 +73,8 @@ module.exports = function(config) {
       'karma-chrome-launcher',
       'karma-requirejs',
       'karma-mocha',
-      'karma-junit-reporter'
+      'karma-junit-reporter',
+      'karma-coverage'
     ]
   });
 };

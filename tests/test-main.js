@@ -17,9 +17,11 @@ require.config({
   baseUrl: '/base',
   
   paths: {
+    'jquery': 'lib/jquery-2.1.1',
     'pixi': 'lib/pixi.dev',
     'modernizr': 'lib/modernizr',
-    'batty': 'src/batty'
+    'batty': 'src/batty',
+    'q': 'lib/q'
   },
   
   shim: {

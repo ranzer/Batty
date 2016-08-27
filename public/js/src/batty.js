@@ -18,67 +18,67 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       this.vel = typeof (options.vel) !== 'undefined' ? options.vel : 15;
       this.angle = typeof (options.angle) !== 'undefined' ? options.angle : 30;
       this.stopAnimation = false;
-      
+
       radians = this.getRadians();
-      
+
       this.vx = this.getVelX(radians);
       this.vy = this.getVelY(radians);
     }
-    
+
     DynamicBody.prototype = Object.create(PIXI.Sprite.prototype);
     DynamicBody.prototype.constructor = DynamicBody;
     DynamicBody.prototype.getCollidableBodies = function() {
       return this.world.blocks;
     };
-  
+
     DynamicBody.prototype.getRadians = function() {
       var radians = this.angle * Math.PI / 180;
-      
+
       return radians;
     };
-  
+
     DynamicBody.prototype.getVelX = function(radians) {
       var vx = Math.cos(radians) * this.vel;
-      
+
       return vx;
     };
-    
+
     DynamicBody.prototype.getVelY = function(radians) {
       var vy = Math.sin(radians) * this.vel;
-      
+
       return vy;
     };
-  
+
     DynamicBody.prototype.updateTransform = function() {
       if (!this.stopAnimation) {
         PIXI.Sprite.prototype.updateTransform.call(this);
-        
+
         this.calculateVelComponents();
         this.calculateSpritePosition();
-       
+
         if (this.onUpdateTransformed) {
           this.onUpdateTransformed();
         }
       }
     }
-    
+
     DynamicBody.prototype.calculateVelComponents = function() {
       var radians = this.getRadians();
-      
+
       this.vx = this.getVelX(radians);
       this.vy = this.getVelY(radians);
     };
-    
+
     DynamicBody.prototype.calculateSpritePosition = function() {
       var spritePosition = this.position;
-      
+
       spritePosition.x += this.vx;
-      spritePosition.y += this.vy;      
+      spritePosition.y += this.vy;
     };
-    
+
     DynamicBody.prototype.wallCollide = function() {
       var spritePosition = this.position,
-          world = this.world;
+        world = this.world;
       if (spritePosition.x + this.width > world.width) {
         this.updateAngleReflectionVertically();
         spritePosition.x = world.width - this.width;
@@ -94,10 +94,10 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         }
         return;
       }
-      
+
       this.calculateVelComponents();
     }
-    
+
     DynamicBody.prototype.updateAngleReflectionHorizontally = function() {
       this.angle = 360 - this.angle;
     };
@@ -108,45 +108,45 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
 
     DynamicBody.prototype.blocksCollide = function() {
       var blocks = this.getCollidableBodies(),
-          blocksLength = blocks.length,
-          block,
-          i;
-      
+        blocksLength = blocks.length,
+        block,
+        i;
+
       for (i = 0; i < blocksLength; i++) {
         block = blocks[i];
         if (this.blockCollides(block)) {
           if (this.onBlockCollided) {
-            this.onBlockCollided(block); 
+            this.onBlockCollided(block);
           }
-          
+
           break;
         }
       }
     }
-    
+
     DynamicBody.prototype.blockCollides = function(block) {
       var isTestBlockHit = this.hitTestBlock(block);
-      
+
       return this.visible && block.visible && isTestBlockHit;
     };
-    
+
     DynamicBody.prototype.hitTestBlock = function(block) {
       var position = this.position,
-          isMissed;
-      
+        isMissed;
+
       isMissed = position.x + this.width < block.position.x ||
         block.position.x + block.width < position.x ||
         position.y + this.height < block.position.y ||
         block.position.y + block.height < position.y;
-      
+
       return !isMissed;
     }
-    
+
     DynamicBody.prototype.blockCollide = function(block) {
       var radians;
-      
+
       var intersectionRect = this.getIntersectionRect(block);
-      
+
       if (intersectionRect.width >= intersectionRect.height) {
         this.updateVerticalCoordinate(block);
         this.updateAngleReflectionHorizontally();
@@ -154,16 +154,16 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         this.updateHorizontalCoordinate(block);
         this.updateAngleReflectionVertically();
       }
-      
+
       radians = this.getRadians();
-      
+
       this.vx = this.getVelX(radians);
       this.vy = this.getVelY(radians);
     }
-    
+
     /*
      * The function updates vertical coordinate of the body.
-     * This function is called after body collides with a 
+     * This function is called after body collides with a
      * block.
      * @param {object} block the block with whom the body collided.
      */
@@ -174,10 +174,10 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         this.position.y = block.position.y - this.height;
       }
     };
-    
+
     /*
      * The function updates horizontal coordinate of the body.
-     * This function is called after body collides with a 
+     * This function is called after body collides with a
      * block.
      * @param {object} block the block with whom the body collided.
      */
@@ -188,100 +188,100 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         this.position.x = block.position.x + block.width;
       }
     };
-    
+
     DynamicBody.prototype.getIntersectionRect = function(block) {
       var height, width;
-  
+
       var x11 = this.position.x,
-          y11 = this.position.y,
-          x12 = this.position.x + this.width,
-          y12 = this.position.y + this.height,
-          x21 = block.position.x,
-          y21 = block.position.y,
-          x22 = block.position.x + block.width,
-          y22 = block.position.y + block.height;
-      
+        y11 = this.position.y,
+        x12 = this.position.x + this.width,
+        y12 = this.position.y + this.height,
+        x21 = block.position.x,
+        y21 = block.position.y,
+        x22 = block.position.x + block.width,
+        y22 = block.position.y + block.height;
+
       width = this.getMaxIntersection(x11, x12, x21, x22);
       height = this.getMaxIntersection(y11, y12, y21, y22);
 
       return { width: width, height: height };
     };
-    
+
     DynamicBody.prototype.getMaxIntersection = function(
-      firstObjectMinPos, firstObjectMaxPos, 
+      firstObjectMinPos, firstObjectMaxPos,
       secondObjectMinPos, secondObjectMaxPos) {
       var minPos = Math.min(firstObjectMaxPos, secondObjectMaxPos);
       var maxPos = Math.max(firstObjectMinPos, secondObjectMinPos);
-      
+
       return Math.max(0, minPos - maxPos);
     };
-    
+
     DynamicBody.prototype.onUpdateTransformed = function(parent) {
       this.wallCollide();
       this.blocksCollide();
     };
-    
+
     DynamicBody.prototype.onBlockCollided = null;
     DynamicBody.prototype.onOutOfScreen = null;
-  
+
     function Circle(texture, world, options) {
       DynamicBody.apply(this, [texture, world, options]);
-      
+
       this.type = 'circle';
     }
-    
+
     Circle.prototype = Object.create(DynamicBody.prototype);
     Circle.prototype.constructor = Circle;
-    
+
     Circle.prototype.onBlockCollided = function(block) {
       if (block.type === 'block' || block.type === 'slider') {
         this.blockCollide(block);
-        
-        // Potential memory leak issue cause block object cannot 
+
+        // Potential memory leak issue cause block object cannot
         // be disposed until gift object is disposed.
         if (block.type === 'block') {
           if (block.gift) {
             this.world.addGift(block.gift);
             block.gift.play();
           }
-          
+
           this.world.removeBlock(block);
         }
       }
     };
-    
+
     Circle.prototype.onOutOfScreen = function(circle) {
       this.world.removeCircle(circle);
     };
-    
+
     function Bullet(texture, world, options) {
       DynamicBody.apply(this, [texture, world, options]);
     }
-    
+
     Bullet.prototype = Object.create(DynamicBody.prototype);
     Bullet.prototype.constructor = Bullet;
-    
+
     Bullet.prototype.wallCollide = function() {
       var spritePosition = this.position;
       if (spritePosition.y < 0) {
         this.world.removeBullet(this);
       }
     };
-    
+
     Bullet.prototype.onBlockCollided = function(block) {
       if (block.type === 'block') {
         this.world.removeBlock(block);
         this.world.removeBullet(this);
       }
     };
-    
+
     function Gift(textures, world, options) {
       var options = options || {};
-      
+
       options.angle = options.angle || 90;
-      
+
       DynamicBody.apply(this, [textures[0], world, options]);
-      
+
       this.isActive = false;
       this.isDestroying = false;
       this.textures = textures;
@@ -292,42 +292,42 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       this.playing = options.playing || false;
       this.type = 'gift';
     }
-    
+
     Gift.prototype = (function() {
       var dynamicBodyPrototype = Object.create(DynamicBody.prototype),
-          movieClipPrototype = Object.create(PIXI.MovieClip.prototype),
-          giftPrototype = {},
-          fnCopyProperties;
-        
+        movieClipPrototype = Object.create(PIXI.MovieClip.prototype),
+        giftPrototype = {},
+        fnCopyProperties;
+
       fnCopyProperties = function(sourceObject, destObject) {
         var prop;
-        
+
         for (prop in sourceObject) {
           destObject[prop] = sourceObject[prop];
         }
       };
-      
+
       fnCopyProperties(dynamicBodyPrototype, giftPrototype);
       fnCopyProperties(movieClipPrototype, giftPrototype);
-      
+
       // We want to override MovieClip's updateTransform method.
       giftPrototype.updateTransform = dynamicBodyPrototype.updateTransform;
-      
+
       return giftPrototype;
     })();
     Gift.prototype.constructor = Gift;
-    
+
     Gift.prototype.onUpdateTransformed = function() {
       if (this.visible) {
         this.blocksCollide();
         PIXI.MovieClip.prototype.updateTransform.call(this);
       }
     };
-    
+
     Gift.prototype.getCollidableBodies = function() {
       return [ this.world.slider ];
     };
-    
+
     /*
      * On block collided event handler function.
      * @param {object} block A dynamic body object.
@@ -339,9 +339,9 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         this.executeAction();
       }
     };
-    
+
     /*
-     * Finds and updates an active gift action expire time if 
+     * Finds and updates an active gift action expire time if
      * current gift's action has expire time period.
      */
     Gift.prototype.updateActiveGiftActionExpireTime = function() {
@@ -356,7 +356,7 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         }
       }
     };
-    
+
     /*
      * Executes gift's action if current gift has one.
      */
@@ -366,37 +366,37 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         this.action();
       }
     };
-    
+
     Gift.prototype.onOutOfScreen = function(gift) {
       this.world.removeGift(gift);
     };
 
     Gift.prototype.action = null;
     Gift.prototype.destroy = null;
-    
+
     function Balls3Gift(world, options) {
       var balls3GiftTexturesLength = 6,
-          balls3GiftTextures = new Array(),
-          i;
-      
+        balls3GiftTextures = new Array(),
+        i;
+
       for (i = 0; i < balls3GiftTexturesLength; i++) {
         balls3GiftTextures.push(PIXI.TextureCache['3balls' + i + '.png']);
       }
- 
+
       Gift.apply(this, [balls3GiftTextures, world, options]);
-      
+
       this.ballsCount = 3;
     }
-    
+
     Balls3Gift.prototype = Object.create(Gift.prototype);
     Balls3Gift.prototype.constructor = Balls3Gift;
-    
+
     Balls3Gift.prototype.action = function() {
       var world = this.world;
-          i = this.ballsCount,
-          slider = world.slider,
-          circle = null;
-        
+      i = this.ballsCount,
+        slider = world.slider,
+        circle = null;
+
       while (i--) {
         circle = world.createCircle({
           x: slider.x,
@@ -404,24 +404,24 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
           angle: Math.floor(Math.random() * 90),
           vel: 10
         });
-       
+
         world.addCircle(circle);
       }
 
       this.isActive = false;
     };
-    
+
     function HandGift(world, options) {
       var handGiftTexturesLength = 7,
-          handGiftTextures = new Array(),
-          i;
-      
+        handGiftTextures = new Array(),
+        i;
+
       for (i = 0; i < handGiftTexturesLength; i++) {
         handGiftTextures.push(PIXI.TextureCache['hand' + i + '.png']);
       }
 
       Gift.apply(this, [handGiftTextures, world, options]);
-      
+
       this.lastTimeActionCalled = 0;
       this.actionExpireTime = 5000;
       this.catchedCircle = null;
@@ -431,13 +431,13 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       this.previousGetCollidableBodies = null;
       this.sliderKeyDownActionRef = this.sliderKeyDownAction.bind(this);
       this.sliderKeyUpActionRef = this.sliderKeyUpAction.bind(this);
-      
+
       this.world.slider.addAction(this.world.slider.CROSSED_SIDE, this.sliderCrossedSide.bind(this));
     }
-    
+
     HandGift.prototype = Object.create(Gift.prototype);
     HandGift.prototype.constructor = HandGift;
-    
+
     /**
      * The slider's crossed side event handler function.
      */
@@ -446,7 +446,7 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         this.catchedCircle.vel = 0;
       }
     };
-    
+
     HandGift.prototype.releaseCircle = function() {
       if (this.catchedCircle) {
         this.catchedCircle.angle = this.previousAngle;
@@ -456,7 +456,7 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         this.catchedCircle = null;
       }
     };
-    
+
     HandGift.prototype.sliderKeyDownAction = function(e) {
       if (this.catchedCircle) {
         if (e.keyCode == 37 || e.keyCode == 39) {
@@ -468,17 +468,17 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         }
       }
     };
-    
+
     HandGift.prototype.sliderKeyUpAction = function(e) {
       if (this.catchedCircle) {
         console.log('changing catchedCircle.vel to 0');
         this.catchedCircle.vel = 0;
       }
     };
-    
+
     HandGift.prototype.action = function() {
       var that = this,
-          slider = this.world.slider;
+        slider = this.world.slider;
 
       this.lastTimeActionCalled = +new Date();
       this.catchedCircle = null;
@@ -489,7 +489,7 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         var bodies = slider.world.circles.filter(function(circle) {
           return circle !== that.catchedCircle;
         });
-        
+
         return bodies;
       };
       slider.addAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
@@ -506,20 +506,20 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
           that.previousVel = block.vel;
           that.catchedCircle = block;
           that.previousOnUpdateTransformed = block.onUpdateTransformed;
-          
+
           block.angle = 0;
           block.vel = 0;
           block.position.y = slider.position.y - block.height - 1;
         }
       };
-          
+
       setTimeout(this.destroy.bind(this), this.actionExpireTime);
     };
-    
+
     HandGift.prototype.destroy = function() {
       var slider = this.world.slider,
-          currentTime = +new Date(),
-          delta = currentTime - this.lastTimeActionCalled;
+        currentTime = +new Date(),
+        delta = currentTime - this.lastTimeActionCalled;
 
       if (currentTime - this.lastTimeActionCalled > this.actionExpireTime) {
         this.isDestroying = true;
@@ -541,17 +541,17 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         setTimeout(this.destroy.bind(this), this.actionExpireTime - delta);
       }
     };
-    
+
     function GunGift(world, options) {
       var gunGiftTexturesLength = 4,
-          gunGiftTextures = new Array();
-      
+        gunGiftTextures = new Array();
+
       for (i = 0; i < gunGiftTexturesLength; i++) {
         gunGiftTextures.push(PIXI.TextureCache['gun' + i + '.png']);
       }
-      
+
       Gift.apply(this, [gunGiftTextures, world, options]);
-    
+
       this.actionExpireTime = 5000;
       this.lastTimeKeyDownFired = 0;
       this.lastTimeActionCalled = 0;
@@ -559,45 +559,45 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       this.keyDownFired = false;
       this.requestId = -1;
       this.fps = 5,
-      this.delay = 1000 / this.fps;
+        this.delay = 1000 / this.fps;
       this.sliderKeyDownActionRef = this.sliderKeyDownAction.bind(this);
       this.sliderKeyUpActionRef = this.sliderKeyUpAction.bind(this);
     }
-    
+
     GunGift.prototype = Object.create(Gift.prototype);
     GunGift.prototype.constructor = GunGift;
-    
+
     GunGift.prototype.sliderKeyDownAction = function(e) {
       var currentTime = Date.now();
-          
+
       if (currentTime - this.lastTimeKeyDownFired > this.delay) {
         this.lastTimeKeyDownFired = currentTime;
         if (!this.keyDownFired) {
           this.keyDownFired = true;
           this.requestId = requestAnimationFrame(this.fireBullet.bind(this));
         }
-      }  
+      }
     };
-    
+
     GunGift.prototype.sliderKeyUpAction = function(e) {
       this.keyDownFired = !!this.world.slider.keysMap[32];
     };
-    
+
     GunGift.prototype.fireBullet = function(time) {
       var currentTime = +new Date(),
-          delta = currentTime - this.lastTimeBulletFired,
-          slider;
-      
+        delta = currentTime - this.lastTimeBulletFired,
+        slider;
+
       this.requestId = requestAnimationFrame(this.fireBullet.bind(this));
       if (delta > this.delay) {
         this.lastTimeBulletFired = currentTime;
         slider = this.world.slider;
         if (this.keyDownFired && slider.keysMap[32]) {
           console.log('Firing');
-          bullet = this.world.createBullet({ 
-            angle: -90, 
-            vel: 10, 
-            x: slider.x + slider.width / 2, 
+          bullet = this.world.createBullet({
+            angle: -90,
+            vel: 10,
+            x: slider.x + slider.width / 2,
             y: slider.y - slider.height
           });
           this.world.addBullet(bullet);
@@ -606,24 +606,24 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         }
       }
     };
-    
+
     GunGift.prototype.action = function() {
       var that = this,
-          world = this.world,
-          slider = world.slider;
-          
+        world = this.world,
+        slider = world.slider;
+
       this.lastTimeActionCalled = +new Date();
 
       slider.addAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
       slider.addAction(Slider.KEY_UP, this.sliderKeyUpActionRef);
-            
+
       setTimeout(this.destroy.bind(this), this.actionExpireTime);
     };
-    
+
     GunGift.prototype.destroy = function() {
       var slider = this.world.slider,
-          currentTime = +new Date(),
-          delta = currentTime - this.lastTimeActionCalled;
+        currentTime = +new Date(),
+        delta = currentTime - this.lastTimeActionCalled;
 
       if (delta > this.actionExpireTime) {
         slider.removeAction(Slider.KEY_DOWN, this.sliderKeyDownActionRef);
@@ -634,48 +634,48 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         setTimeout(this.destroy.bind(this), this.actionExpireTime - delta);
       }
     };
-    
+
     function Slider(texture, world, options) {
       var options = options || {};
-      
+
       options.x = typeof (options.x) !== 'undefined' ? options.x : world.width / 2 - texture.frame.width / 2;
       options.y = typeof (options.y) !== 'undefined' ? options.y : world.height - texture.frame.height - 1;
       options.angle = 0;
-      
+
       DynamicBody.apply(this, [texture, world, options]);
-      
+
       this.vel1 = typeof (options.vel1) !== 'undefined' ? options.vel1 : 15;
       this.type = 'slider';
       this.maxX = world.width - texture.frame.width;
       this.actions = Object.create(null);
       this.keysMap = {};
-      
+
       this.addAction(Slider.KEY_DOWN, this.onKeyDown.bind(this));
       this.addAction(Slider.KEY_UP, this.onKeyUp.bind(this));
-      
+
       window.addEventListener(Slider.KEY_DOWN, this.triggerActions.bind(this, Slider.KEY_DOWN));
       window.addEventListener(Slider.KEY_UP, this.triggerActions.bind(this, Slider.KEY_UP));
     }
-    
+
     Slider.KEY_DOWN = 'keydown';
     Slider.KEY_UP = 'keyup';
     Slider.CROSSED_SIDE = 'ps';
-    
+
     Slider.prototype = Object.create(DynamicBody.prototype);
-    
+
     Slider.prototype.getCollidableBodies = function() {
       return this.world.circles;
     };
-    
+
     Slider.prototype.constructor = Slider;
-    
+
     Slider.prototype.addAction = function(type, action) {
       if (typeof(this.actions[type]) === 'undefined') {
         this.actions[type] = [];
       }
       this.actions[type].push(action);
     };
-    
+
     Slider.prototype.removeAction = function(type, action) {
       var index;
       if (typeof(this.actions[type]) !== 'undefined') {
@@ -685,32 +685,32 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         }
       }
     };
-    
+
     Slider.prototype.onKeyDown = function(e) {
       this.keysMap[e.keyCode] = true;
-    
+
       if (e.keyCode == 37) {
         this.vel = -this.vel1;
       } else if (e.keyCode == 39) {
         this.vel = this.vel1;
       }
     };
-    
+
     Slider.prototype.onKeyUp = function(e) {
       this.keysMap[e.keyCode] = false;
-    
+
       if (e.keyCode == 37 || e.keyCode == 39) {
         this.vel = 0;
       }
     };
-    
+
     Slider.prototype.triggerActions = function(type, e) {
       var i = -1,
-          actions, 
-          length;
-      
+        actions,
+        length;
+
       actions = this.actions[type];
-      
+
       if (typeof(actions) !== 'undefined') {
         length = actions.length;
         while (++i < length) {
@@ -718,7 +718,7 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         };
       }
     };
-    
+
     Slider.prototype.onUpdateTransformed = function() {
       if (this.position.x < 0) {
         this.position.x = 0;
@@ -727,13 +727,13 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         this.position.x = this.world.width - this.width;
         this.triggerActions(this.CROSSED_SIDE);
       }
-      
+
       this.blocksCollide();
     };
-    
+
     function World(options) {
       var options = options || {};
-      
+
       this.blocksStartX = 150;
       this.blocksStartY = 150;
       this.stage = new PIXI.Stage(0xffffff);
@@ -744,13 +744,9 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       this.blocksDistVertical = 5;
       this.maxBlocksPerRow = options.maxBlocksPerRow || 16;
       this.maxBlocksPerColumn = options.maxBlocksPerColumn || 10;
-      this.width = options.width || this.getDefaultWorldWidth();
-      this.height = options.height || this.getDefaultWorldHeight();
-      this.renderer = new PIXI.CanvasRenderer(this.width, this.height);
       this.circleTexture = PIXI.TextureCache[this.BALL_TEXTURE_NAME];
       this.sliderTexture = PIXI.TextureCache[this.SLIDER_TEXTURE_NAME];
       this.bulletTexture = PIXI.TextureCache[this.BULLET_TEXTURE_NAME];
-      this.slider = new Slider(this.sliderTexture, this, { vel: 0, vel1: 30 });
       this.blocks = new Array();
       this.circles = new Array();
       this.gifts = new Array();
@@ -758,6 +754,30 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       this.bodiesToRemove = [];
       this.messages = {};
       this.gameContainer = options.gameContainer || window.document.body;
+      this.width = options.width || options.gameContainer.clientWidth;//this.getDefaultWorldWidth();
+      this.height = options.height || options.gameContainer.clientHeight;//this.getDefaultWorldHeight();
+      this.slider = new Slider(this.sliderTexture, this, { vel: 0, vel1: 30 });
+      this.renderer = new PIXI.CanvasRenderer(this.width, this.height);
+      this.scaleX = document.documentElement.clientWidth / 1280;
+      this.scaleY = document.documentElement.clientHeight / 649;
+
+   /*   window.onresize = (function() {
+        var de = document.documentElement;
+
+        return function() {
+          var scaleX = de.clientWidth / 1280,
+              scaleY = de.clientHeight / 649,
+              i = 0,
+              block;
+
+          for (; block = this.blocks[i++]; ) {
+            block.position.x *= scaleX;
+            block.position.y *= scaleY;
+            block.width *= scaleX;
+            block.height *= scaleY;            
+          }
+        }.bind(this);
+      }).call(this);*/
 
       if (!this.circleTexture) {
         throw new Error('The frameId ' + this.BALL_TEXTURE_NAME + ' does not exist in the texture cache ' + this);
@@ -786,10 +806,10 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
     World.prototype.removeBlock = function(block) {
       this.removeBody(block, this.blocks);
     };
-    
+
     World.prototype.addCircles = function(circlesCount, angle, vel) {
       var circle, i;
-      
+
       for (i = 0; i < circlesCount; i++) {
         circle = this.createCircle({
           x: this.slider.x,
@@ -797,37 +817,37 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
           angle: angle,
           vel: vel
         });
-        
+
         this.addCircle(circle);
       }
     };
-    
+
     World.prototype.getBlockTexture = function(name) {
       return PIXI.TextureCache[name];
     };
-    
+
     World.prototype.getBlockTextureName = function(index) {
       return this.BLOCKS_TEXTURE_NAMES[index];
     };
-    
+
     World.prototype.createBlockFromTexture = function(blockTexture) {
       var block = new PIXI.Sprite(blockTexture);
-      
+
       block.type = 'block';
-      
+
       return block;
     };
-    
+
     World.prototype.getGiftForBlockAtIndex = function(block, index) {
       var gift;
-      
+
       if (index == 0) {
         gift = new HandGift(
           this,
           {
             animationSpeed: 0.1,
-            x: block.position.x, 
-            y: block.position.y, 
+            x: block.position.x,
+            y: block.position.y,
             vel: 1
           }
         );
@@ -836,62 +856,62 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
           this,
           {
             animationSpeed: 0.1,
-            x: block.position.x, 
-            y: block.position.y, 
+            x: block.position.x,
+            y: block.position.y,
             vel: 1
           }
         );
-      } 
-      
+      }
+
       return gift;
     };
-    
+
     World.prototype.createGift = function(id, x, y) {
       switch (id) {
-        case 0: 
+        case 0:
           return new Balls3Gift(
             this, { animationSpeed: 0.1, x: x, y: y, vel: 1 }
           );
         case 1: return null;
-        case 2: 
+        case 2:
           return new HandGift(
             this, { animationSpeed: 0.1, x: x, y: y, vel: 1 }
           );
-        case 3: 
+        case 3:
           return new GunGift(
             this, { animationSpeed: 0.1, x: x, y: y, vel: 1 }
           );
         default: return null;
       }
     };
-    
+
     World.prototype.addBlocks = function(blocksCount) {
       var i, block, gift, blockTextureName;
-      
+
       for (i = 0; i < blocksCount; i++) {
         blockTextureName = this.getBlockTextureName(i % this.BLOCKS_TEXTURE_NAMES.length);
         blockTexture = this.getBlockTexture(blockTextureName);
-      
+
         if (!blockTexture) {
-          throw new Error('The frameId ' + blockTexture + ' does not exist in the texture cache ' + this);  
+          throw new Error('The frameId ' + blockTexture + ' does not exist in the texture cache ' + this);
         }
-      
+
         block = this.createBlockFromTexture(blockTexture);
-        
+
         block.position.x = this.blocksStartX + i % 8 * 55 + 1;
         block.position.y = this.blocksStartY + Math.floor(i / 8) * 30;
-    
+
         gift = this.getGiftForBlockAtIndex(block, i);
-    
+
         if (gift) {
           block.gift = gift;
         }
-        
+
         this.stage.addChild(block);
         this.blocks.push(block);
       }
     };
-    
+
     /**
      * Return gifts of the specified type and activity.
      * @param {string} type The type of gift.
@@ -902,79 +922,79 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       var gifts = this.gifts.filter(function(gift) {
         return gift.isActive === active && gift.constructor.name == type;
       });
-      
+
       return gifts;
     };
-    
+
     World.prototype.addBody = function(body, bodies) {
       bodies.push(body);
       this.stage.addChild(body);
     };
-    
+
     World.prototype.addGift = function(gift) {
       console.log('Adding gift of type ' + gift.constructor.name);
       this.addBody(gift, this.gifts);
     };
-    
+
     World.prototype.removeGift = function(gift) {
       this.removeBody(gift, this.gifts);
     };
-    
+
     World.prototype.addCircle = function(circle) {
       this.addBody(circle, this.circles);
     };
-    
+
     World.prototype.addBullet = function(bullet) {
       this.addBody(bullet, this.bullets);
     };
-    
+
     World.prototype.createCircle = function(options) {
       var circle = new Circle(
         this.circleTexture,
         this,
         options);
-      
+
       return circle;
     };
-    
+
     World.prototype.createBullet = function(options) {
       var bullet = new Bullet(
         this.bulletTexture,
         this,
         options);
-      
+
       return bullet;
     };
-    
+
     World.prototype.removeCircle = function(circle, visible) {
       this.removeBody(circle, this.circles, visible);
     };
-    
+
     World.prototype.removeBullet = function(bullet, visible) {
       this.removeBody(bullet, this.bullets, visible);
     }
-    
+
     World.prototype.removeBody = function(body, bodies, visible) {
       var bodies, index, visible;
-      
+
       if (body) {
         bodies = bodies || null,
-        index = Array.isArray(bodies) ? bodies.indexOf(body) : -1,
-        visible = visible || (typeof(bodies) == 'boolean' ? bodies : false);
- 
+          index = Array.isArray(bodies) ? bodies.indexOf(body) : -1,
+          visible = visible || (typeof(bodies) == 'boolean' ? bodies : false);
+
         body.visible = visible;
 
         if (bodies && index > -1) {
           bodies.splice(index, 1);
         }
-        
+
         this.bodiesToRemove.push(body);
       }
     };
-    
+
     World.prototype.removeBodies = function(bodies, preRemoveCallback) {
       var i = bodies.length;
-      
+
       while (i--) {
         if (preRemoveCallback) {
           preRemoveCallback(bodies[i]);
@@ -983,7 +1003,7 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       }
       bodies.length = 0;
     };
-    
+
     World.prototype.removeBlocks = function() {
       this.removeBodies(this.blocks, function(body) {
         if (body.gift) {
@@ -991,18 +1011,18 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         }
       });
     };
-    
+
     World.prototype.removeCircles = function() {
       this.removeBodies(this.circles);
     };
-    
+
     World.prototype.removeBullets = function() {
       this.removeBodies(this.bullets);
     };
-    
+
     World.prototype.removeGifts = function() {
       var gifts = this.gifts,
-          i = this.gifts.length;
+        i = this.gifts.length;
 
       while (i--) {
         if (gifts[i].isActive && gifts[i].destroy) {
@@ -1012,38 +1032,38 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
 
       this.removeBodies(this.gifts);
     };
-    
+
     World.prototype.stopAnimation = function(stop) {
       var childBodies = this.stage.children,
-          childBodiesLength = childBodies.length,
-          i;
-      
+        childBodiesLength = childBodies.length,
+        i;
+
       for (i = 0; i < childBodiesLength; i++) {
         if (childBodies[i].type === 'circle' ||
-            childBodies[i].type === 'slider' || 
-            childBodies[i].type === 'gift') {
+          childBodies[i].type === 'slider' ||
+          childBodies[i].type === 'gift') {
           childBodies[i].stopAnimation = stop;
         }
       }
     };
-    
+
     World.prototype.addMessage = function(messageId, message) {
       var x = this.width / 2,
-          y = this.height / 2;
-      
+        y = this.height / 2;
+
       message.anchor.x = 0.5;
       message.anchor.y = 0.5;
-      
+
       message.position.x = x;
       message.position.y = y;
-      
+
       this.messages[messageId] = message;
       this.stage.addChild(message);
     };
-    
+
     World.prototype.showMessage = function(id, text) {
       var message, deferred;
-      
+
       if (!this.isMessageShown(id)) {
         message = this.messages[id];
         if (!message) {
@@ -1057,13 +1077,13 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         deferred = Q.defer();
         deferred.resolve();
       }
-      
+
       return deferred.promise;
     };
-    
+
     World.prototype.hideMessage = function(id) {
       var deferred;
-      
+
       if (this.isMessageShown(id)) {
         message = this.messages[id];
         deferred = message.show(false);
@@ -1071,58 +1091,58 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
         deferred = Q.defer();
         deferred.resolve();
       }
-      
+
       return deferred.promise;
     };
-    
+
     World.prototype.isMessageShown = function(id) {
       var message = this.messages[id];
-      
-      return typeof(message) !== 'undefined' && message.isVisible();    
+
+      return typeof(message) !== 'undefined' && message.isVisible();
     };
-    
+
     World.prototype.showLostGameMessage = function() {
       return this.showMessage(this.GAME_LOST_MESSAGE, 'You lost!');
     };
-    
+
     World.prototype.showWonGameMessage = function() {
       return this.showMessage(this.GAME_WON_MESSAGE, 'You won');
     };
-    
+
     World.prototype.showLevelCompletedMessage = function(level) {
       return this.showMessage(this.LEVEL_COMPLETED_MESSAGE, 'Level ' + level + ' completed');
     };
-    
+
     World.prototype.showLoadNextLevelMessage = function(level) {
       return this.showMessage(this.LOADING_NEXT_LEVEL_MESSAGE, 'Loading level ' + level);
-    };    
-    
+    };
+
     World.prototype.hideLostGameMessage = function() {
       return this.hideMessage(this.GAME_LOST_MESSAGE);
     };
-    
+
     World.prototype.hideWonGameMessage = function() {
       //console.log('hideWonGameMessage');
       return this.hideMessage(this.GAME_WON_MESSAGE);
     };
-   
+
     World.prototype.hideLevelCompletedMessage = function() {
       return this.hideMessage(this.LEVEL_COMPLETED_MESSAGE);
     };
-    
+
     World.prototype.hideLoadNextLevelMessage = function() {
       var promise = this.hideMessage(this.LOADING_NEXT_LEVEL_MESSAGE);
-      
+
       //console.log('promise.isFulfilled (hideLoadNextLevelMessage): ' + promise.isFulfilled());
       //console.log('promise.isPending (hideLoadNextLevelMessage): ' + promise.isPending());
-      
+
       return promise;
     };
-    
-   
+
+
     World.prototype.onGameWon = null;
     World.prototype.onGameLost = null;
-    
+
     World.prototype.draw = function() {
       if (this.gameStarted) {
         if (!this.circles.length && this.onGameLost) {
@@ -1131,119 +1151,119 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
           this.onGameWon();
         }
       }
-      
+
       this.removeBodies(this.bodiesToRemove);
       // Here add code for removing object from stage.
-      
+
       this.renderer.render(this.stage);
     };
-    
+
     World.prototype.initLevel = function(levelData) {
       var index, blockData, block;
-      
+
       this.levelInitialized = false;
-      
+
       for (index in levelData) {
         block = this.createBlock(index, levelData[index]);
         this.addBlock(block);
       }
-      
+
       this.addBlock(this.slider);
-      
+
       this.levelInitialized = true;
     };
-    
+
     World.prototype.createBlock = function(index, data) {
       var x = this.getBlockXCoordinate(index),
-          y = this.getBlockYCoordinate(index),
-          blockTexture = this.getBlockTexture(data.color + '.png'),
-          block = this.createBlockFromTexture(blockTexture),
-          gift;
-         
+        y = this.getBlockYCoordinate(index),
+        blockTexture = this.getBlockTexture(data.color + '.png'),
+        block = this.createBlockFromTexture(blockTexture),
+        gift;
+
       block.position.x = x;
       block.position.y = y;
-      
+
       if (data.gift) {
         gift = this.createGift(data.gift, x, y);
         block.gift = gift;
       }
-      
+
       return block;
     };
-    
+
     World.prototype.getBlockXCoordinate = function(index) {
       var mod = index % this.maxBlocksPerRow,
-          x = mod ? mod * (this.blockTextureWidth + this.blocksDistHorizontal) : mod;
-          
+        x = mod ? mod * (this.blockTextureWidth + this.blocksDistHorizontal) : mod;
+
       return x;
     };
-    
+
     World.prototype.getBlockYCoordinate = function(index) {
       var mod = Math.floor(index / this.maxBlocksPerColumn),
-          y = index ? Math.floor(index / this.maxBlocksPerRow) * 
-            (this.blockTextureHeight + this.blocksDistVertical) : index;
-          
+        y = index ? Math.floor(index / this.maxBlocksPerRow) *
+        (this.blockTextureHeight + this.blocksDistVertical) : index;
+
       return y;
     };
-    
+
     World.prototype.addBlock = function(block) {
       this.stage.addChild(block);
       this.blocks.push(block);
     };
-    
+
     World.prototype.removeMessage = function(messageId) {
       var message;
-      
+
       message = this.messages[messageId];
       if (message) {
         delete this.messages[messageId];
-        this.stage.removeChild(message);    
+        this.stage.removeChild(message);
       }
     };
-    
+
     World.prototype.removeMessages = function() {
       var id, message
-      
+
       for (id in this.messages) {
         if (Object.hasOwnProperty(id)) {
           this.removeMessage(id);
         }
       }
     };
-    
+
     World.prototype.getDefaultWorldWidth = function() {
-      var width = (this.blockTextureWidth + this.blocksDistHorizontal) * 
+      var width = (this.blockTextureWidth + this.blocksDistHorizontal) *
         (this.maxBlocksPerRow - 1) + this.blockTextureWidth;
-    
+
       return width;
     };
-    
+
     World.prototype.getDefaultWorldHeight = function() {
-      var height = (this.blockTextureHeight + this.blocksDistVertical) * 
+      var height = (this.blockTextureHeight + this.blocksDistVertical) *
         (this.maxBlocksPerColumn - 1) + this.blockTextureHeight;
-        
+
       height = height > 600 ? height : 600;
-      
+
       return height;
     };
-    
+
     function Message(text, config) {
       var rgbRegex = /^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i,
-          config = config || {},
-          style = config.style || {
+        config = config || {},
+        style = config.style || {
             font: 'bold 40px Arial',
             fill: 'blue'//'rgb(0, 255, 0)'
           },
-          match;
-      
+        match;
+
       PIXI.Text.apply(this, [text, style]);
-      
+
       match = this.style.fill.match(rgbRegex);
-      
+
       if (!match) {
         match = [ '0', '0', '0' ];
       }
-      
+
       this.r = match[1];
       this.g = match[2];
       this.b = match[3];
@@ -1252,15 +1272,15 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       this.showMessage = false;
       this.showDeferred = null;
     }
-    
+
     Message.prototype = Object.create(PIXI.Text.prototype);
-    
+
     Message.prototype.constructor = Message;
-    
+
     Message.prototype.getColor = function() {
       return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.alpha + ')';
     };
-    
+
     Message.prototype.updateTransform = function() {
       if (this.showDeferred && this.showDeferred.promise.isPending()) {
         if (this.showMessage) {
@@ -1341,7 +1361,7 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
             that.world.removeBlocks();
             that.world.removeGifts();
             that.world.removeBullets();
-            
+
             return that.world.hideLevelCompletedMessage();
           })
           .then(function () {
@@ -1391,9 +1411,9 @@ define('batty', [ 'pixi', 'jquery', 'q' ], function(PIXI, $, Q) {
       console.log('starting game ...');
       this.world.addCircles(1, 225, 10);
       this.world.stopAnimation(!start);
-      this.world.gameStarted = start;      
+      this.world.gameStarted = start;
     };
-    
+
     return {
       DynamicBody: DynamicBody,
       Circle: Circle,

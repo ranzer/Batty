@@ -8,7 +8,7 @@ gulp.task('remove-files', function() {
     .pipe(rimraf());
 });
 
-gulp.task('copy-files', function() {
+gulp.task('copy-files', ['remove-files'], function() {
   var jsSrc = gulp.src('../public/js/src/*.js')
     .pipe(gulp.dest('src'));
   var jsLib = gulp.src('../public/js/lib/*.js')
@@ -24,12 +24,11 @@ gulp.task('copy-files', function() {
 gulp.task('set-environment-variables', function() {
   process.env.IE_BIN = 'C:\\Program Files\\Internet Explorer\\iexplore.exe';
   process.env.CHROME_BIN = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
-  process.env.FIREFOX_BIN = 'C:\\Program Files (x86)\\Utilities\\Mozilla Firefox\\firefox.exe';
+  process.env.FIREFOX_BIN = 'E:\Program Files (x86)\Mozilla Firefox\firefox.exe';
 });
     
-gulp.task('run-tests', ['remove-files', 'copy-files', 'set-environment-variables'], function(done) {
+gulp.task('run-tests', ['copy-files', 'set-environment-variables'], function(done) {
   karma.start({
-    configFile: __dirname + '/karma.conf.js',
-    singleRun: true
+    configFile: __dirname + '/karma.conf.js'
   }, done);
 });
